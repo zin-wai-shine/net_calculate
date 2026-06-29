@@ -130,7 +130,6 @@ body {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--card-border);
 }
 
 .brand-section {
@@ -578,7 +577,7 @@ body {
   .actions-section {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
   }
 
