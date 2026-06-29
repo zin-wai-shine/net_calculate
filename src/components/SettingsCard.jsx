@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { AlertCircle, X } from 'lucide-react';
 
@@ -28,19 +28,33 @@ const SettingsCard = ({
   cargoCost,
   setCargoCost
 }) => {
+  // Temporary states for changes within the modal
+  const [tempRate, setTempRate] = useState(exchangeRate);
+  const [tempProfit, setTempProfit] = useState(profitAmount);
+  const [tempCargo, setTempCargo] = useState(cargoCost);
+
+  // Sync temporary state with actual state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTempRate(exchangeRate);
+      setTempProfit(profitAmount);
+      setTempCargo(cargoCost);
+    }
+  }, [isOpen, exchangeRate, profitAmount, cargoCost]);
+
   const handleExchangeRateChange = (e) => {
     const value = e.target.value;
     if (value === '') {
-      setExchangeRate('');
+      setTempRate('');
       return;
     }
     const numValue = parseFloat(value);
     if (!isNaN(numValue)) {
-      setExchangeRate(numValue >= 0 ? numValue : 0);
+      setTempRate(numValue >= 0 ? numValue : 0);
     }
   };
 
-  const isRateInvalid = exchangeRate !== '' && parseFloat(exchangeRate) <= 0;
+  const isRateInvalid = tempRate !== '' && parseFloat(tempRate) <= 0;
 
   // React Select Custom Styling aligned with our glass liquid layout
   const selectStyles = {
@@ -117,8 +131,18 @@ const SettingsCard = ({
   };
 
   // Find corresponding objects for Select display values
-  const currentProfitOption = PRESET_VALUES.find(opt => opt.value === profitAmount) || PRESET_VALUES[0];
-  const currentCargoOption = PRESET_VALUES.find(opt => opt.value === cargoCost) || PRESET_VALUES[0];
+  const currentProfitOption = PRESET_VALUES.find(opt => opt.value === tempProfit) || PRESET_VALUES[0];
+  const currentCargoOption = PRESET_VALUES.find(opt => opt.value === tempCargo) || PRESET_VALUES[0];
+
+  const handleSave = () => {
+    if (tempRate === '' || parseFloat(tempRate) <= 0) {
+      return; // Prevent saving if invalid exchange rate
+    }
+    setExchangeRate(tempRate.toString());
+    setProfitAmount(tempProfit);
+    setCargoCost(tempCargo);
+    onClose(); // Close modal
+  };
 
   return (
     <div className={`modal-overlay ${isOpen ? 'active' : ''}`} onClick={onClose}>
@@ -144,7 +168,7 @@ const SettingsCard = ({
                 id="exchange-rate-input"
                 type="number"
                 className="form-input"
-                value={exchangeRate}
+                value={tempRate}
                 onChange={handleExchangeRateChange}
                 placeholder="e.g., 135"
                 min="0.01"
@@ -163,7 +187,7 @@ const SettingsCard = ({
                 id="profit-select"
                 options={PRESET_VALUES}
                 value={currentProfitOption}
-                onChange={(option) => setProfitAmount(option.value)}
+                onChange={(option) => setTempProfit(option.value)}
                 styles={selectStyles}
                 isSearchable={false}
               />
@@ -179,12 +203,21 @@ const SettingsCard = ({
                 id="cargo-select"
                 options={PRESET_VALUES}
                 value={currentCargoOption}
-                onChange={(option) => setCargoCost(option.value)}
+                onChange={(option) => setTempCargo(option.value)}
                 styles={selectStyles}
                 isSearchable={false}
               />
             </div>
           </div>
+
+          <button
+            className="btn btn-primary"
+            onClick={handleSave}
+            disabled={isRateInvalid || tempRate === ''}
+            style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
+          >
+            Save Settings
+          </button>
         </div>
       </div>
     </div>
