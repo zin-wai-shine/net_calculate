@@ -32,6 +32,9 @@ const SettingsCard = ({
   const [tempRate, setTempRate] = useState(exchangeRate);
   const [tempProfit, setTempProfit] = useState(profitAmount);
   const [tempCargo, setTempCargo] = useState(cargoCost);
+  
+  // Loading state to block interaction and display saving feedback
+  const [isLoading, setIsLoading] = useState(false);
 
   // Sync temporary state with actual state when modal opens
   useEffect(() => {
@@ -39,10 +42,12 @@ const SettingsCard = ({
       setTempRate(exchangeRate);
       setTempProfit(profitAmount);
       setTempCargo(cargoCost);
+      setIsLoading(false); // Reset loading state
     }
   }, [isOpen, exchangeRate, profitAmount, cargoCost]);
 
   const handleExchangeRateChange = (e) => {
+    if (isLoading) return;
     const value = e.target.value;
     if (value === '') {
       setTempRate('');
@@ -70,8 +75,9 @@ const SettingsCard = ({
       color: 'var(--text-primary)',
       padding: '0.1rem 0.2rem',
       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-      cursor: 'pointer',
+      cursor: isLoading ? 'not-allowed' : 'pointer',
       minHeight: '38px',
+      opacity: isLoading ? 0.6 : 1,
       '&:hover': {
         borderColor: state.isFocused ? 'var(--input-focus-border)' : 'var(--input-border)',
       }
@@ -135,21 +141,40 @@ const SettingsCard = ({
   const currentCargoOption = PRESET_VALUES.find(opt => opt.value === tempCargo) || PRESET_VALUES[0];
 
   const handleSave = () => {
-    if (tempRate === '' || parseFloat(tempRate) <= 0) {
-      return; // Prevent saving if invalid exchange rate
+    if (tempRate === '' || parseFloat(tempRate) <= 0 || isLoading) {
+      return;
     }
-    setExchangeRate(tempRate.toString());
-    setProfitAmount(tempProfit);
-    setCargoCost(tempCargo);
-    onClose(); // Close modal
+    
+    setIsLoading(true);
+
+    // Simulate 1 second delay for settings write
+    setTimeout(() => {
+      setExchangeRate(tempRate.toString());
+      setProfitAmount(tempProfit);
+      setCargoCost(tempCargo);
+      setIsLoading(false);
+      onClose(); // Close modal
+    }, 1000);
   };
 
   return (
-    <div className={`modal-overlay ${isOpen ? 'active' : ''}`} onClick={onClose}>
+    <div 
+      className={`modal-overlay ${isOpen ? 'active' : ''}`} 
+      onClick={isLoading ? undefined : onClose}
+    >
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Calculator Settings</h2>
-          <button className="modal-close" onClick={onClose} aria-label="Close Settings">
+          <button 
+            className="modal-close" 
+            onClick={onClose} 
+            disabled={isLoading}
+            aria-label="Close Settings"
+            style={{ 
+              pointerEvents: isLoading ? 'none' : 'auto', 
+              opacity: isLoading ? 0.5 : 1 
+            }}
+          >
             <X size={16} />
           </button>
         </div>
@@ -170,6 +195,7 @@ const SettingsCard = ({
                 className="form-input"
                 value={tempRate}
                 onChange={handleExchangeRateChange}
+                disabled={isLoading}
                 placeholder="e.g., 135"
                 min="0.01"
                 step="any"
@@ -190,6 +216,7 @@ const SettingsCard = ({
                 onChange={(option) => setTempProfit(option.value)}
                 styles={selectStyles}
                 isSearchable={false}
+                isDisabled={isLoading}
               />
             </div>
           </div>
@@ -206,6 +233,7 @@ const SettingsCard = ({
                 onChange={(option) => setTempCargo(option.value)}
                 styles={selectStyles}
                 isSearchable={false}
+                isDisabled={isLoading}
               />
             </div>
           </div>
@@ -213,10 +241,17 @@ const SettingsCard = ({
           <button
             className="btn btn-primary"
             onClick={handleSave}
-            disabled={isRateInvalid || tempRate === ''}
-            style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
+            disabled={isRateInvalid || tempRate === '' || isLoading}
+            style={{ 
+              width: '100%', 
+              marginTop: '1rem', 
+              padding: '0.75rem',
+              pointerEvents: isLoading ? 'none' : 'auto',
+              opacity: isLoading ? 0.7 : 1,
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
           >
-            Save
+            {isLoading ? 'Loading...' : 'Save'}
           </button>
         </div>
       </div>
