@@ -167,7 +167,7 @@ body {
   padding: 0.6rem 0.9rem;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -584,7 +584,7 @@ body {
 
   .actions-section .btn {
     padding: 0.65rem 0.85rem;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
   }
 
   /* Main Calculator Grid responsive margins */

@@ -216,7 +216,7 @@ const SettingsCard = ({
             disabled={isRateInvalid || tempRate === ''}
             style={{ width: '100%', marginTop: '1rem', padding: '0.75rem' }}
           >
-            Save Settings
+            Save
           </button>
         </div>
       </div>
