@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import SettingsCard from './components/SettingsCard';
 import CalculatorCard from './components/CalculatorCard';
 
 function App() {
@@ -20,60 +19,63 @@ function App() {
     return saved !== null ? parseInt(saved, 10) : 10000;
   });
 
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('net_calc_theme');
+    return saved !== null ? saved : 'dark';
+  });
+
   const [thaiPrice, setThaiPrice] = useState('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Sync state to LocalStorage
   useEffect(() => {
     localStorage.setItem('net_calc_exchange_rate', exchangeRate);
   }, [exchangeRate]);
 
+  // Sync profit margin
   useEffect(() => {
     localStorage.setItem('net_calc_profit_amount', profitAmount.toString());
   }, [profitAmount]);
 
+  // Sync cargo cost
   useEffect(() => {
     localStorage.setItem('net_calc_cargo_cost', cargoCost.toString());
   }, [cargoCost]);
 
-  // Enforce dark mode globally
+  // Sync theme selection and apply classes to body
   useEffect(() => {
-    document.body.classList.add('dark-mode');
-  }, []);
+    localStorage.setItem('net_calc_theme', theme);
+    document.body.classList.remove('theme-light', 'theme-dark', 'theme-soft-blue');
+    if (theme === 'light') {
+      document.body.classList.add('theme-light');
+    } else if (theme === 'soft-blue') {
+      document.body.classList.add('theme-soft-blue');
+    } else {
+      document.body.classList.add('theme-dark');
+    }
+  }, [theme]);
 
   return (
-    <>
-      <div className="app-wrapper">
-        <Header onOpenSettings={() => setIsSettingsOpen(true)} />
-        <main className="calculator-grid">
-          <div className="calculator-container">
-            <CalculatorCard
-              thaiPrice={thaiPrice}
-              setThaiPrice={setThaiPrice}
-              exchangeRate={exchangeRate}
-              profitAmount={profitAmount}
-              cargoCost={cargoCost}
-            />
-          </div>
-        </main>
+    <div className="app-wrapper">
+      <Header theme={theme} onChangeTheme={setTheme} />
+      <main className="calculator-grid">
+        <div className="calculator-container">
+          <CalculatorCard
+            thaiPrice={thaiPrice}
+            setThaiPrice={setThaiPrice}
+            exchangeRate={exchangeRate}
+            setExchangeRate={setExchangeRate}
+            profitAmount={profitAmount}
+            setProfitAmount={setProfitAmount}
+            cargoCost={cargoCost}
+            setCargoCost={setCargoCost}
+          />
+        </div>
+      </main>
 
-        <footer className="footer-text">
-          <span>Net_Calculate &copy; {new Date().getFullYear()} — Built for modern, high-speed business usage.</span>
-        </footer>
-      </div>
-
-      <SettingsCard
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        theme="dark"
-        exchangeRate={exchangeRate}
-        setExchangeRate={setExchangeRate}
-        profitAmount={profitAmount}
-        setProfitAmount={setProfitAmount}
-        cargoCost={cargoCost}
-        setCargoCost={setCargoCost}
-      />
-    </>
+      <footer className="footer-text">
+        <span>Net_Calculate &copy; {new Date().getFullYear()} — Built for modern, high-speed business usage.</span>
+      </footer>
+    </div>
   );
 }
 

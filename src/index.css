@@ -31,9 +31,11 @@
   --result-card-bg: rgba(34, 34, 34, 0.02);
   --result-value-color: #222222;
   --result-border: 1px solid rgba(34, 34, 34, 0.08);
+
+  --dropdown-bg: #ffffff;
 }
 
-.dark-mode {
+.theme-dark {
   /* Minimalist Helvetica Dark Theme (#222222 and white) */
   --bg-gradient: linear-gradient(180deg, #121212 0%, #1a1a1a 100%);
   --modal-bg: rgba(34, 34, 34, 0.85); /* #222222 glass overlay */
@@ -66,6 +68,45 @@
   --result-card-bg: rgba(255, 255, 255, 0.01);
   --result-value-color: #ffffff;
   --result-border: 1px solid rgba(255, 255, 255, 0.05);
+
+  --dropdown-bg: #222222;
+}
+
+.theme-soft-blue {
+  /* Minimalist Premium Soft Blue Theme */
+  --bg-gradient: linear-gradient(180deg, #0e1e38 0%, #0a1424 100%);
+  --modal-bg: rgba(15, 30, 54, 0.85);
+  --card-border: rgba(99, 179, 237, 0.15);
+  --card-shadow: 0 30px 60px rgba(3, 8, 20, 0.5), inset 0 1px 0 rgba(99, 179, 237, 0.08);
+  
+  --text-primary: #ebf8ff;
+  --text-secondary: #90cdf4;
+  --text-muted: #4a5568;
+  
+  --input-bg: rgba(10, 20, 38, 0.7);
+  --input-border: rgba(99, 179, 237, 0.2);
+  --input-focus-border: #63b3ed;
+  --input-focus-shadow: 0 0 0 4px rgba(99, 179, 237, 0.15);
+  
+  --accent-color: #63b3ed;
+  
+  /* Liquid Glass Button Soft Blue */
+  --btn-glass-bg: linear-gradient(135deg, rgba(99, 179, 237, 0.05) 0%, rgba(99, 179, 237, 0.12) 100%);
+  --btn-glass-border: rgba(99, 179, 237, 0.18);
+  --btn-glass-text: #ebf8ff;
+  --btn-glass-shadow: 0 8px 32px 0 rgba(3, 8, 20, 0.3), inset 0 1px 0 rgba(99, 179, 237, 0.08);
+  
+  --btn-primary-bg: #63b3ed;
+  --btn-primary-text: #0e1e38;
+
+  --formula-badge-bg: rgba(99, 179, 237, 0.06);
+  --formula-badge-text: #63b3ed;
+
+  --result-card-bg: rgba(99, 179, 237, 0.02);
+  --result-value-color: #ebf8ff;
+  --result-border: 1px solid rgba(99, 179, 237, 0.12);
+
+  --dropdown-bg: #101c30;
 }
 
 * {
@@ -126,10 +167,12 @@ body {
 
 /* Header */
 .app-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-bottom: 1.25rem;
+  padding-right: 44px; /* Space for the absolute settings button */
 }
 
 .brand-section {
@@ -224,7 +267,7 @@ body {
   width: 36px;
   height: 36px;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 50%; /* Make it rounded full! */
 }
 
 /* Main Calculator Grid - expands vertically to push header and footer */
@@ -232,8 +275,8 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Centering the calculator vertically inside the middle region */
-  margin: 2rem 0; /* Comfortable gap around header and footer */
+  justify-content: flex-start; /* Align calculator closer to header */
+  margin: 0.75rem 0; /* Reduced vertical gap around header and footer */
 }
 
 /* Form Elements */
@@ -346,16 +389,16 @@ body {
 }
 
 .result-value {
-  font-size: 2.75rem;
-  font-weight: 800;
+  font-size: 2.25rem;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--result-value-color);
   transition: all 0.2s ease;
 }
 
 .result-currency {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -615,11 +658,11 @@ body {
   }
 
   .result-value {
-    font-size: 2.6rem;
+    font-size: 2rem;
   }
 
   .result-currency {
-    font-size: 1.15rem;
+    font-size: 0.95rem;
   }
 
   /* Receipt lines sizing */
@@ -670,6 +713,83 @@ body {
     transform: translateY(12px);
   }
   100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Settings Row Grid for Calculator Inputs */
+.settings-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.75rem; /* Increased gap under selects */
+}
+
+@media (max-width: 480px) {
+  .settings-row {
+    gap: 0.75rem;
+    margin-bottom: 1.5rem; /* Increased gap under selects on mobile */
+  }
+}
+
+/* Theme Selector Dropdown */
+.theme-selector-container {
+  position: absolute;
+  top: 0.25rem;
+  right: 0;
+}
+
+.theme-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 8px;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  z-index: 2000;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: themeFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.theme-dropdown-item {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.theme-dropdown-item:hover {
+  background: var(--formula-badge-bg);
+  color: var(--text-primary);
+}
+
+.theme-dropdown-item.active {
+  background: var(--accent-color);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+}
+
+@keyframes themeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
     opacity: 1;
     transform: translateY(0);
   }
