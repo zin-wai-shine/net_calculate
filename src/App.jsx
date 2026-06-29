@@ -23,16 +23,6 @@ function App() {
   const [thaiPrice, setThaiPrice] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('net_calc_theme');
-    if (saved) return saved;
-    // Fallback to system preference
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return 'light';
-  });
-
   // Sync state to LocalStorage
   useEffect(() => {
     localStorage.setItem('net_calc_exchange_rate', exchangeRate);
@@ -46,39 +36,15 @@ function App() {
     localStorage.setItem('net_calc_cargo_cost', cargoCost.toString());
   }, [cargoCost]);
 
+  // Enforce dark mode globally
   useEffect(() => {
-    localStorage.setItem('net_calc_theme', theme);
-    if (theme === 'dark') {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
-  };
-
-  const handleReset = () => {
-    localStorage.removeItem('net_calc_exchange_rate');
-    localStorage.removeItem('net_calc_profit_amount');
-    localStorage.removeItem('net_calc_cargo_cost');
-    // We keep theme preference, but reset business configurations
-    setExchangeRate('135');
-    setProfitAmount(10000);
-    setCargoCost(10000);
-    setThaiPrice('');
-  };
+    document.body.classList.add('dark-mode');
+  }, []);
 
   return (
     <>
       <div className="app-wrapper">
-        <Header
-          theme={theme}
-          toggleTheme={toggleTheme}
-          handleReset={handleReset}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-        />
+        <Header onOpenSettings={() => setIsSettingsOpen(true)} />
         <main className="calculator-grid">
           <div className="calculator-container">
             <CalculatorCard
@@ -99,7 +65,7 @@ function App() {
       <SettingsCard
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        theme={theme}
+        theme="dark"
         exchangeRate={exchangeRate}
         setExchangeRate={setExchangeRate}
         profitAmount={profitAmount}

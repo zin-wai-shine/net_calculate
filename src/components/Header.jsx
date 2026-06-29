@@ -1,7 +1,7 @@
 import React from 'react';
-import { Moon, Sun, RotateCcw, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
-const Header = ({ theme, toggleTheme, handleReset, onOpenSettings }) => {
+const Header = ({ onOpenSettings }) => {
   return (
     <header className="app-header">
       <div className="brand-section">
@@ -18,22 +18,6 @@ const Header = ({ theme, toggleTheme, handleReset, onOpenSettings }) => {
         >
           <Settings size={14} />
           <span>Settings</span>
-        </button>
-        <button
-          className="btn btn-glass btn-icon-only"
-          onClick={toggleTheme}
-          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          aria-label="Toggle Theme"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-        <button
-          className="btn btn-glass"
-          onClick={handleReset}
-          title="Reset Calculator Settings"
-        >
-          <RotateCcw size={14} />
-          <span>Reset Settings</span>
         </button>
       </div>
     </header>
