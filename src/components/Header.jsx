@@ -12,7 +12,7 @@ const Header = ({ theme, onChangeTheme }) => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.remove('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleSelectTheme = (selectedTheme) => {
@@ -26,7 +26,7 @@ const Header = ({ theme, onChangeTheme }) => {
         <h1 className="brand-title">
           <span>Net Calculate</span>
         </h1>
-        <p className="brand-subtitle">Thai Baht (THB) to Myanmar Kyat (MMK) selling price calculator</p>
+        <p className="brand-subtitle">Myanmar Kyat (MMK) to Thai Baht (THB) selling price calculator</p>
       </div>
 
       <div className="theme-selector-container" ref={dropdownRef}>
