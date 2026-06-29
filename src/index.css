@@ -1,0 +1,677 @@
+:root {
+  /* Minimalist Helvetica Light Theme */
+  --bg-gradient: linear-gradient(180deg, #f7f7f9 0%, #ededf2 100%);
+  --modal-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(34, 34, 34, 0.08);
+  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  
+  --text-primary: #222222;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --input-border: rgba(34, 34, 34, 0.12);
+  --input-focus-border: #222222;
+  --input-focus-shadow: 0 0 0 4px rgba(34, 34, 34, 0.04);
+  
+  --accent-color: #222222;
+  
+  /* Liquid Glass Button Light */
+  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(245, 245, 247, 0.8) 100%);
+  --btn-glass-border: rgba(34, 34, 34, 0.08);
+  --btn-glass-text: #222222;
+  --btn-glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  
+  --btn-primary-bg: #222222;
+  --btn-primary-text: #ffffff;
+
+  --formula-badge-bg: rgba(34, 34, 34, 0.04);
+  --formula-badge-text: #222222;
+
+  --result-card-bg: rgba(34, 34, 34, 0.02);
+  --result-value-color: #222222;
+  --result-border: 1px solid rgba(34, 34, 34, 0.08);
+}
+
+.dark-mode {
+  /* Minimalist Helvetica Dark Theme (#222222 and white) */
+  --bg-gradient: linear-gradient(180deg, #121212 0%, #1a1a1a 100%);
+  --modal-bg: rgba(34, 34, 34, 0.85); /* #222222 glass overlay */
+  --card-border: rgba(255, 255, 255, 0.07);
+  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #555555;
+  
+  --input-bg: rgba(20, 20, 20, 0.6);
+  --input-border: rgba(255, 255, 255, 0.08);
+  --input-focus-border: #ffffff;
+  --input-focus-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  
+  --accent-color: #ffffff;
+  
+  /* Liquid Glass Button Dark */
+  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.08) 100%);
+  --btn-glass-border: rgba(255, 255, 255, 0.08);
+  --btn-glass-text: #ffffff;
+  --btn-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #222222;
+
+  --formula-badge-bg: rgba(255, 255, 255, 0.04);
+  --formula-badge-text: #ffffff;
+
+  --result-card-bg: rgba(255, 255, 255, 0.01);
+  --result-value-color: #ffffff;
+  --result-border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* Helvetica typography stack for clean agency design */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column; /* body fills 100% height vertically */
+  transition: background 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App Container - Stretches vertically to push content */
+#root {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding: 2.25rem 1.5rem;
+}
+
+.app-wrapper {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Spreads header and footer to outer bounds */
+  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Flat Card Styling for main calculator card */
+.card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0.5rem 0;
+  transition: none;
+}
+
+.card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.actions-section {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Soft Liquid Glass Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.btn-glass {
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  color: var(--btn-glass-text);
+  box-shadow: var(--btn-glass-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.btn-glass:hover {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border-color: var(--btn-primary-bg);
+  transform: translateY(-1.5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.btn-glass:hover::before {
+  left: 120%;
+}
+
+.btn-glass:active {
+  transform: translateY(0);
+}
+
+.btn-icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+/* Main Calculator Grid - expands vertically to push header and footer */
+.calculator-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Centering the calculator vertically inside the middle region */
+  margin: 2rem 0; /* Comfortable gap around header and footer */
+}
+
+/* Form Elements */
+.form-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: 0.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+/* Standard Normal Size Inputs */
+.form-input {
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-appearance: none;
+}
+
+.form-input-with-icon {
+  padding-left: 2.25rem;
+}
+
+.form-input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-shadow);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Result Card */
+.result-card {
+  background: var(--result-card-bg);
+  border: var(--result-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.result-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-secondary);
+}
+
+.result-value-container {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.result-value {
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--result-value-color);
+  transition: all 0.2s ease;
+}
+
+.result-currency {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.calc-pulse {
+  animation: pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Receipts list breakdown */
+.formula-section {
+  margin-top: 2.75rem;
+}
+
+.formula-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.formula-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formula-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.formula-term {
+  display: flex;
+  flex-direction: column;
+}
+
+.formula-term span {
+  font-weight: 600;
+}
+
+.formula-term-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.formula-value {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.formula-divider {
+  height: 1px;
+  background: var(--card-border);
+  margin: 0.15rem 0;
+}
+
+.formula-row-total {
+  font-size: 0.95rem;
+}
+
+.formula-row-total .formula-term span {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: none;
+}
+
+.formula-row-total .formula-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+/* Designer Settings Modal Box styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1.5rem;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 440px;
+  background: var(--modal-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: 16px;
+  position: relative;
+  transform: scale(0.96) translateY(10px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: visible;
+}
+
+.modal-overlay.active .modal-content {
+  transform: scale(1) translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.modal-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.modal-close:hover {
+  background: var(--card-border);
+  color: var(--text-primary);
+  border-color: var(--card-border);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Validation */
+.validation-error {
+  color: #ff3b30;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Footer styling */
+.footer-text {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Mobile Media Queries - Perfect Scaling */
+@media (max-width: 480px) {
+  #root {
+    padding: 1.25rem 1rem;
+  }
+
+  .app-wrapper {
+    gap: 1.25rem;
+    min-height: calc(100vh - 2.5rem); /* Adjust vertical viewport limits */
+  }
+
+  /* Responsive header stacking */
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding-bottom: 1rem;
+  }
+
+  .brand-section {
+    width: 100%;
+  }
+
+  .brand-title {
+    font-size: 1.25rem;
+    letter-spacing: normal;
+  }
+
+  .actions-section {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .actions-section .btn {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  /* Main Calculator Grid responsive margins */
+  .calculator-grid {
+    margin: 1.5rem 0;
+  }
+
+  /* Normal form styling on mobile */
+  .form-label {
+    font-size: 0.8rem;
+  }
+
+  .form-input {
+    font-size: 1rem;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .form-input-with-icon {
+    padding-left: 2.25rem;
+  }
+
+  /* Calculations Result Panel sizing */
+  .result-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .result-label {
+    font-size: 0.8rem;
+  }
+
+  .result-value {
+    font-size: 2.6rem;
+  }
+
+  .result-currency {
+    font-size: 1.15rem;
+  }
+
+  /* Receipt lines sizing */
+  .formula-title {
+    font-size: 0.8rem;
+  }
+
+  .formula-row {
+    font-size: 0.9rem;
+  }
+
+  .formula-term-sub {
+    font-size: 0.8rem;
+  }
+
+  .formula-row-total {
+    font-size: 1rem;
+  }
+
+  .formula-row-total .formula-value {
+    font-size: 1.15rem;
+  }
+
+  /* Modal responsiveness */
+  .modal-overlay {
+    padding: 0.75rem;
+    align-items: center;
+  }
+
+  .modal-content {
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 1.15rem;
+  }
+
+  .modal-body {
+    padding: 1.15rem;
+    gap: 1.15rem;
+  }
+}
+
+/* Slide Up Page Animation */
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
