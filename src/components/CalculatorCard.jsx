@@ -27,14 +27,22 @@ const CalculatorCard = ({
   cargoCost,
   setCargoCost
 }) => {
-  const [animate, setAnimate] = useState(false);
-
   const parsedThaiPrice = thaiPrice === '' ? 0 : parseFloat(thaiPrice);
   const parsedRate = exchangeRate === '' ? 0 : parseFloat(exchangeRate);
+  const parsedProfit = profitAmount === '' ? 0 : parseFloat(profitAmount);
+  const parsedCargo = cargoCost === '' ? 0 : parseFloat(cargoCost);
   
   // Final selling price calculation
   const baseCostMMK = parsedThaiPrice * parsedRate;
-  const finalPrice = baseCostMMK + profitAmount + cargoCost;
+  const finalPrice = baseCostMMK + parsedProfit + parsedCargo;
+
+  const isProfitPreset = PRESET_VALUES.some(opt => opt.value === profitAmount);
+  const isCargoPreset = PRESET_VALUES.some(opt => opt.value === cargoCost);
+
+  const [profitMode, setProfitMode] = useState(isProfitPreset ? 'preset' : 'manual');
+  const [cargoMode, setCargoMode] = useState(isCargoPreset ? 'preset' : 'manual');
+
+  const [animate, setAnimate] = useState(false);
 
   // Trigger pop-in animation on output change
   useEffect(() => {
@@ -91,13 +99,27 @@ const CalculatorCard = ({
       fontSize: '0.9rem',
       fontWeight: '500',
       color: 'var(--text-primary)',
-      padding: '0.1rem 0.2rem',
+      padding: '0 0.2rem',
       transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
       cursor: 'pointer',
-      minHeight: '38px',
+      height: '44px',
+      minHeight: '44px',
+      display: 'flex',
+      alignItems: 'center',
       '&:hover': {
         borderColor: state.isFocused ? 'var(--input-focus-border)' : 'var(--input-border)',
       }
+    }),
+    valueContainer: (provided) => ({
+      ...provided,
+      height: '42px',
+      padding: '0 6px',
+      display: 'flex',
+      alignItems: 'center'
+    }),
+    indicatorsContainer: (provided) => ({
+      ...provided,
+      height: '42px',
     }),
     menu: (provided) => ({
       ...provided,
@@ -135,7 +157,8 @@ const CalculatorCard = ({
     }),
     input: (provided) => ({
       ...provided,
-      color: 'var(--text-primary)'
+      color: 'var(--text-primary)',
+      margin: '0px'
     }),
     placeholder: (provided) => ({
       ...provided,
@@ -189,32 +212,116 @@ const CalculatorCard = ({
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label" htmlFor="profit-select">
             <span>Profit Margin (MMK)</span>
+            <div className="input-toggle-group">
+              <button
+                type="button"
+                className={`toggle-btn ${profitMode === 'preset' ? 'active' : ''}`}
+                onClick={() => {
+                  setProfitMode('preset');
+                  const isPreset = PRESET_VALUES.some(opt => opt.value === profitAmount);
+                  if (!isPreset) {
+                    setProfitAmount(PRESET_VALUES[0].value);
+                  }
+                }}
+              >
+                Preset
+              </button>
+              <button
+                type="button"
+                className={`toggle-btn ${profitMode === 'manual' ? 'active' : ''}`}
+                onClick={() => setProfitMode('manual')}
+              >
+                Manual
+              </button>
+            </div>
           </label>
           <div className="input-container" style={{ display: 'block' }}>
-            <Select
-              id="profit-select"
-              options={PRESET_VALUES}
-              value={currentProfitOption}
-              onChange={(option) => setProfitAmount(option.value)}
-              styles={selectStyles}
-              isSearchable={false}
-            />
+            {profitMode === 'preset' ? (
+              <Select
+                id="profit-select"
+                options={PRESET_VALUES}
+                value={currentProfitOption}
+                onChange={(option) => setProfitAmount(option.value)}
+                styles={selectStyles}
+                isSearchable={false}
+              />
+            ) : (
+              <input
+                id="profit-manual-input"
+                type="number"
+                className="form-input"
+                value={profitAmount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setProfitAmount('');
+                  } else {
+                    const parsed = parseInt(val, 10);
+                    setProfitAmount(isNaN(parsed) ? 0 : parsed);
+                  }
+                }}
+                placeholder="e.g. 100"
+                min="0"
+              />
+            )}
           </div>
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label" htmlFor="cargo-select">
             <span>Cargo Cost (MMK)</span>
+            <div className="input-toggle-group">
+              <button
+                type="button"
+                className={`toggle-btn ${cargoMode === 'preset' ? 'active' : ''}`}
+                onClick={() => {
+                  setCargoMode('preset');
+                  const isPreset = PRESET_VALUES.some(opt => opt.value === cargoCost);
+                  if (!isPreset) {
+                    setCargoCost(PRESET_VALUES[0].value);
+                  }
+                }}
+              >
+                Preset
+              </button>
+              <button
+                type="button"
+                className={`toggle-btn ${cargoMode === 'manual' ? 'active' : ''}`}
+                onClick={() => setCargoMode('manual')}
+              >
+                Manual
+              </button>
+            </div>
           </label>
           <div className="input-container" style={{ display: 'block' }}>
-            <Select
-              id="cargo-select"
-              options={PRESET_VALUES}
-              value={currentCargoOption}
-              onChange={(option) => setCargoCost(option.value)}
-              styles={selectStyles}
-              isSearchable={false}
-            />
+            {cargoMode === 'preset' ? (
+              <Select
+                id="cargo-select"
+                options={PRESET_VALUES}
+                value={currentCargoOption}
+                onChange={(option) => setCargoCost(option.value)}
+                styles={selectStyles}
+                isSearchable={false}
+              />
+            ) : (
+              <input
+                id="cargo-manual-input"
+                type="number"
+                className="form-input"
+                value={cargoCost}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setCargoCost('');
+                  } else {
+                    const parsed = parseInt(val, 10);
+                    setCargoCost(isNaN(parsed) ? 0 : parsed);
+                  }
+                }}
+                placeholder="e.g. 0"
+                min="0"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -278,7 +385,7 @@ const CalculatorCard = ({
             <div className="formula-term">
               <span>Profit Margin</span>
             </div>
-            <div className="formula-value">+{formatMMK(profitAmount)} MMK</div>
+            <div className="formula-value">+{formatMMK(parsedProfit)} MMK</div>
           </div>
 
           {/* Cargo */}
@@ -286,7 +393,7 @@ const CalculatorCard = ({
             <div className="formula-term">
               <span>Cargo Cost</span>
             </div>
-            <div className="formula-value">+{formatMMK(cargoCost)} MMK</div>
+            <div className="formula-value">+{formatMMK(parsedCargo)} MMK</div>
           </div>
 
           <div className="formula-divider"></div>

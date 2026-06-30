@@ -11,12 +11,22 @@ function App() {
 
   const [profitAmount, setProfitAmount] = useState(() => {
     const saved = localStorage.getItem('net_calc_profit_amount');
-    return saved !== null ? parseInt(saved, 10) : 10000;
+    if (saved !== null) {
+      if (saved === '') return '';
+      const parsed = parseInt(saved, 10);
+      return isNaN(parsed) ? 10000 : parsed;
+    }
+    return 10000;
   });
 
   const [cargoCost, setCargoCost] = useState(() => {
     const saved = localStorage.getItem('net_calc_cargo_cost');
-    return saved !== null ? parseInt(saved, 10) : 10000;
+    if (saved !== null) {
+      if (saved === '') return '';
+      const parsed = parseInt(saved, 10);
+      return isNaN(parsed) ? 10000 : parsed;
+    }
+    return 10000;
   });
 
   const [theme, setTheme] = useState(() => {

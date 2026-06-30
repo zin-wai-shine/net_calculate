@@ -311,6 +311,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
 }
 
 .input-container {
@@ -333,7 +335,8 @@ body {
 /* Standard Normal Size Inputs */
 .form-input {
   width: 100%;
-  padding: 0.75rem 0.85rem;
+  height: 44px;
+  padding: 0 0.85rem;
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 500;
@@ -641,7 +644,8 @@ body {
 
   .form-input {
     font-size: 1rem;
-    padding: 0.8rem 0.9rem;
+    height: 44px;
+    padding: 0 0.9rem;
   }
 
   .form-input-with-icon {
@@ -792,5 +796,55 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Segmented control for Preset/Manual toggle */
+.input-toggle-group {
+  display: inline-flex;
+  background: var(--formula-badge-bg);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  border: 1px solid var(--card-border);
+  align-items: center;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  line-height: 1;
+}
+
+.toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.toggle-btn.active {
+  background: var(--accent-color);
+  color: var(--btn-primary-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Touch targets optimized for mobile viewports */
+@media (max-width: 480px) {
+  .input-toggle-group {
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .toggle-btn {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
   }
 }
