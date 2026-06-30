@@ -60,6 +60,36 @@ const Header = ({ theme, onChangeTheme }) => {
             >
               Soft Blue
             </button>
+            <button
+              className={`theme-dropdown-item ${theme === 'polka-dot' ? 'active' : ''}`}
+              onClick={() => handleSelectTheme('polka-dot')}
+            >
+              Polka Purple
+            </button>
+            <button
+              className={`theme-dropdown-item ${theme === 'polka-light' ? 'active' : ''}`}
+              onClick={() => handleSelectTheme('polka-light')}
+            >
+              Polka Light
+            </button>
+            <button
+              className={`theme-dropdown-item ${theme === 'polka-dark' ? 'active' : ''}`}
+              onClick={() => handleSelectTheme('polka-dark')}
+            >
+              Polka Dark
+            </button>
+            <button
+              className={`theme-dropdown-item ${theme === 'polka-pink' ? 'active' : ''}`}
+              onClick={() => handleSelectTheme('polka-pink')}
+            >
+              Polka Pink
+            </button>
+            <button
+              className={`theme-dropdown-item ${theme === 'soft-pink' ? 'active' : ''}`}
+              onClick={() => handleSelectTheme('soft-pink')}
+            >
+              Soft Pink
+            </button>
           </div>
         )}
       </div>

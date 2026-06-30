@@ -54,11 +54,21 @@ function App() {
   // Sync theme selection and apply classes to body
   useEffect(() => {
     localStorage.setItem('net_calc_theme', theme);
-    document.body.classList.remove('theme-light', 'theme-dark', 'theme-soft-blue');
+    document.body.classList.remove('theme-light', 'theme-dark', 'theme-soft-blue', 'theme-polka-dot', 'theme-polka-light', 'theme-polka-dark', 'theme-polka-pink', 'theme-soft-pink');
     if (theme === 'light') {
       document.body.classList.add('theme-light');
     } else if (theme === 'soft-blue') {
       document.body.classList.add('theme-soft-blue');
+    } else if (theme === 'polka-dot') {
+      document.body.classList.add('theme-polka-dot');
+    } else if (theme === 'polka-light') {
+      document.body.classList.add('theme-polka-light');
+    } else if (theme === 'polka-dark') {
+      document.body.classList.add('theme-polka-dark');
+    } else if (theme === 'polka-pink') {
+      document.body.classList.add('theme-polka-pink');
+    } else if (theme === 'soft-pink') {
+      document.body.classList.add('theme-soft-pink');
     } else {
       document.body.classList.add('theme-dark');
     }

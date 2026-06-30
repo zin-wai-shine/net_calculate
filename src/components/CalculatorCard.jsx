@@ -185,7 +185,7 @@ const CalculatorCard = ({
       {/* Exchange Rate */}
       <div className="form-group">
         <label className="form-label" htmlFor="exchange-rate-input">
-          <span>Exchange Rate (1 THB → MMK)</span>
+          <span>Exchange Rate</span>
           {isRateInvalid && (
             <span className="validation-error">
               <AlertCircle size={12} /> Rate must be &gt; 0

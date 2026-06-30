@@ -33,6 +33,8 @@
   --result-border: 1px solid rgba(34, 34, 34, 0.08);
 
   --dropdown-bg: #ffffff;
+  --bg-size: auto;
+  --bg-position: 0 0;
 }
 
 .theme-dark {
@@ -109,6 +111,214 @@
   --dropdown-bg: #101c30;
 }
 
+.theme-polka-dot {
+  /* Rich Dark Violet/Indigo Gradient with beautiful Purple Polka Dots */
+  --bg-gradient: radial-gradient(rgba(192, 132, 252, 0.09) 1.5px, transparent 1.5px),
+                 radial-gradient(rgba(192, 132, 252, 0.09) 1.5px, transparent 1.5px),
+                 linear-gradient(135deg, #120b29 0%, #1e113a 50%, #080314 100%);
+  --bg-size: 24px 24px, 24px 24px, 100% 100%;
+  --bg-position: 0 0, 12px 12px, 0 0;
+  
+  --modal-bg: rgba(22, 13, 44, 0.85);
+  --card-border: rgba(192, 132, 252, 0.15);
+  --card-shadow: 0 30px 60px rgba(5, 2, 15, 0.6), inset 0 1px 0 rgba(192, 132, 252, 0.08);
+  
+  --text-primary: #f3e8ff;
+  --text-secondary: #c084fc;
+  --text-muted: #6b21a8;
+  
+  --input-bg: rgba(12, 6, 28, 0.7);
+  --input-border: rgba(192, 132, 252, 0.2);
+  --input-focus-border: #d8b4fe;
+  --input-focus-shadow: 0 0 0 4px rgba(192, 132, 252, 0.2);
+  
+  --accent-color: #c084fc;
+  
+  /* Liquid Glass Button Polka Dot Purple */
+  --btn-glass-bg: linear-gradient(135deg, rgba(192, 132, 252, 0.05) 0%, rgba(192, 132, 252, 0.12) 100%);
+  --btn-glass-border: rgba(192, 132, 252, 0.2);
+  --btn-glass-text: #f3e8ff;
+  --btn-glass-shadow: 0 8px 32px 0 rgba(5, 2, 15, 0.35), inset 0 1px 0 rgba(192, 132, 252, 0.08);
+  
+  --btn-primary-bg: #c084fc;
+  --btn-primary-text: #120b29;
+
+  --formula-badge-bg: rgba(192, 132, 252, 0.06);
+  --formula-badge-text: #c084fc;
+
+  --result-card-bg: rgba(192, 132, 252, 0.02);
+  --result-value-color: #f3e8ff;
+  --result-border: 1px solid rgba(192, 132, 252, 0.12);
+
+  --dropdown-bg: #190f33;
+}
+
+.theme-polka-light {
+  /* Minimalist Helvetica Light Theme with grey Polka Dots */
+  --bg-gradient: radial-gradient(rgba(34, 34, 34, 0.05) 1.5px, transparent 1.5px),
+                 radial-gradient(rgba(34, 34, 34, 0.05) 1.5px, transparent 1.5px),
+                 linear-gradient(180deg, #f7f7f9 0%, #ededf2 100%);
+  --bg-size: 24px 24px, 24px 24px, 100% 100%;
+  --bg-position: 0 0, 12px 12px, 0 0;
+  
+  --modal-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(34, 34, 34, 0.08);
+  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  
+  --text-primary: #222222;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --input-border: rgba(34, 34, 34, 0.12);
+  --input-focus-border: #222222;
+  --input-focus-shadow: 0 0 0 4px rgba(34, 34, 34, 0.04);
+  
+  --accent-color: #222222;
+  
+  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(245, 245, 247, 0.8) 100%);
+  --btn-glass-border: rgba(34, 34, 34, 0.08);
+  --btn-glass-text: #222222;
+  --btn-glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  
+  --btn-primary-bg: #222222;
+  --btn-primary-text: #ffffff;
+
+  --formula-badge-bg: rgba(34, 34, 34, 0.04);
+  --formula-badge-text: #222222;
+
+  --result-card-bg: rgba(34, 34, 34, 0.02);
+  --result-value-color: #222222;
+  --result-border: 1px solid rgba(34, 34, 34, 0.08);
+
+  --dropdown-bg: #ffffff;
+}
+
+.theme-polka-dark {
+  /* Minimalist Helvetica Dark Theme with white Polka Dots */
+  --bg-gradient: radial-gradient(rgba(255, 255, 255, 0.06) 1.5px, transparent 1.5px),
+                 radial-gradient(rgba(255, 255, 255, 0.06) 1.5px, transparent 1.5px),
+                 linear-gradient(180deg, #121212 0%, #1a1a1a 100%);
+  --bg-size: 24px 24px, 24px 24px, 100% 100%;
+  --bg-position: 0 0, 12px 12px, 0 0;
+  
+  --modal-bg: rgba(34, 34, 34, 0.85);
+  --card-border: rgba(255, 255, 255, 0.07);
+  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #555555;
+  
+  --input-bg: rgba(20, 20, 20, 0.6);
+  --input-border: rgba(255, 255, 255, 0.08);
+  --input-focus-border: #ffffff;
+  --input-focus-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  
+  --accent-color: #ffffff;
+  
+  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.08) 100%);
+  --btn-glass-border: rgba(255, 255, 255, 0.08);
+  --btn-glass-text: #ffffff;
+  --btn-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #222222;
+
+  --formula-badge-bg: rgba(255, 255, 255, 0.04);
+  --formula-badge-text: #ffffff;
+
+  --result-card-bg: rgba(255, 255, 255, 0.01);
+  --result-value-color: #ffffff;
+  --result-border: 1px solid rgba(255, 255, 255, 0.05);
+
+  --dropdown-bg: #222222;
+}
+
+.theme-polka-pink {
+  /* Vibrant Rose/Pink Gradient with soft Pink Polka Dots */
+  --bg-gradient: radial-gradient(rgba(244, 63, 94, 0.1) 1.5px, transparent 1.5px),
+                 radial-gradient(rgba(244, 63, 94, 0.1) 1.5px, transparent 1.5px),
+                 linear-gradient(135deg, #4c0519 0%, #831843 50%, #1c0007 100%);
+  --bg-size: 24px 24px, 24px 24px, 100% 100%;
+  --bg-position: 0 0, 12px 12px, 0 0;
+  
+  --modal-bg: rgba(60, 5, 23, 0.85);
+  --card-border: rgba(244, 63, 94, 0.15);
+  --card-shadow: 0 30px 60px rgba(15, 2, 6, 0.6), inset 0 1px 0 rgba(244, 63, 94, 0.08);
+  
+  --text-primary: #ffe4e6;
+  --text-secondary: #f43f5e;
+  --text-muted: #9d174d;
+  
+  --input-bg: rgba(30, 2, 10, 0.7);
+  --input-border: rgba(244, 63, 94, 0.25);
+  --input-focus-border: #fda4af;
+  --input-focus-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
+  
+  --accent-color: #f43f5e;
+  
+  /* Liquid Glass Button Polka Dot Pink */
+  --btn-glass-bg: linear-gradient(135deg, rgba(244, 63, 94, 0.05) 0%, rgba(244, 63, 94, 0.12) 100%);
+  --btn-glass-border: rgba(244, 63, 94, 0.2);
+  --btn-glass-text: #ffe4e6;
+  --btn-glass-shadow: 0 8px 32px 0 rgba(15, 2, 6, 0.35), inset 0 1px 0 rgba(244, 63, 94, 0.08);
+  
+  --btn-primary-bg: #f43f5e;
+  --btn-primary-text: #4c0519;
+
+  --formula-badge-bg: rgba(244, 63, 94, 0.06);
+  --formula-badge-text: #f43f5e;
+
+  --result-card-bg: rgba(244, 63, 94, 0.02);
+  --result-value-color: #ffe4e6;
+  --result-border: 1px solid rgba(244, 63, 94, 0.12);
+
+  --dropdown-bg: #33020f;
+}
+
+.theme-soft-pink {
+  /* Soft Pastel/Rose water Glass Theme */
+  --bg-gradient: radial-gradient(rgba(255, 255, 255, 0.65) 1.5px, transparent 1.5px),
+                 radial-gradient(rgba(255, 255, 255, 0.65) 1.5px, transparent 1.5px),
+                 linear-gradient(135deg, #fff1f2 0%, #ffe4e6 40%, #ffd3e8 100%);
+  --bg-size: 24px 24px, 24px 24px, 100% 100%;
+  --bg-position: 0 0, 12px 12px, 0 0;
+  
+  --modal-bg: rgba(255, 255, 255, 0.6);
+  --card-border: rgba(219, 39, 119, 0.12);
+  --card-shadow: 0 30px 60px rgba(219, 39, 119, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  
+  --text-primary: #831843;
+  --text-secondary: #db2777;
+  --text-muted: #f472b6;
+  
+  --input-bg: rgba(255, 255, 255, 0.7);
+  --input-border: rgba(219, 39, 119, 0.15);
+  --input-focus-border: #db2777;
+  --input-focus-shadow: 0 0 0 4px rgba(219, 39, 119, 0.08);
+  
+  --accent-color: #db2777;
+  
+  /* Liquid Glass Button Soft Pink */
+  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
+  --btn-glass-border: rgba(219, 39, 119, 0.12);
+  --btn-glass-text: #831843;
+  --btn-glass-shadow: 0 4px 16px rgba(219, 39, 119, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  
+  --btn-primary-bg: #db2777;
+  --btn-primary-text: #ffffff;
+
+  --formula-badge-bg: rgba(219, 39, 119, 0.05);
+  --formula-badge-text: #db2777;
+
+  --result-card-bg: rgba(219, 39, 119, 0.02);
+  --result-value-color: #831843;
+  --result-border: 1px solid rgba(219, 39, 119, 0.08);
+
+  --dropdown-bg: #ffffff;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -119,6 +329,8 @@ body {
   /* Helvetica typography stack for clean agency design */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   background: var(--bg-gradient);
+  background-size: var(--bg-size);
+  background-position: var(--bg-position);
   color: var(--text-primary);
   min-height: 100vh;
   display: flex;
