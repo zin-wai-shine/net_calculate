@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import CalculatorCard from './components/CalculatorCard';
+import WatermarkStudio from './components/WatermarkStudio';
 
 function App() {
+  const [currentView, setCurrentView] = useState('calculator'); // 'calculator' | 'watermark'
   // Lazy state initialization from LocalStorage
   const [exchangeRate, setExchangeRate] = useState(() => {
     const saved = localStorage.getItem('net_calc_exchange_rate');
@@ -76,21 +78,27 @@ function App() {
 
   return (
     <div className="app-wrapper">
-      <Header theme={theme} onChangeTheme={setTheme} />
-      <main className="calculator-grid">
-        <div className="calculator-container">
-          <CalculatorCard
-            thaiPrice={thaiPrice}
-            setThaiPrice={setThaiPrice}
-            exchangeRate={exchangeRate}
-            setExchangeRate={setExchangeRate}
-            profitAmount={profitAmount}
-            setProfitAmount={setProfitAmount}
-            cargoCost={cargoCost}
-            setCargoCost={setCargoCost}
-          />
-        </div>
-      </main>
+      {currentView === 'calculator' ? (
+        <>
+          <Header theme={theme} onChangeTheme={setTheme} onOpenWatermark={() => setCurrentView('watermark')} />
+          <main className="calculator-grid">
+            <div className="calculator-container">
+              <CalculatorCard
+                thaiPrice={thaiPrice}
+                setThaiPrice={setThaiPrice}
+                exchangeRate={exchangeRate}
+                setExchangeRate={setExchangeRate}
+                profitAmount={profitAmount}
+                setProfitAmount={setProfitAmount}
+                cargoCost={cargoCost}
+                setCargoCost={setCargoCost}
+              />
+            </div>
+          </main>
+        </>
+      ) : (
+        <WatermarkStudio onBack={() => setCurrentView('calculator')} />
+      )}
 
       <footer className="footer-text">
         <span>Net_Calculate &copy; {new Date().getFullYear()} — Built for modern, high-speed business usage.</span>
