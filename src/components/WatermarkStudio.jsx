@@ -15,6 +15,7 @@ const PRESET_COLORS = [
 ];
 
 const FONTS = [
+  { value: 'Olivia', label: 'Olivia (Elegant Calligraphy)' },
   { value: 'Montserrat', label: 'Montserrat (Modern Sans)' },
   { value: 'Playfair Display', label: 'Playfair Display (Elegant Serif)' },
   { value: 'Pacifico', label: 'Pacifico (Retro Cursive)' },
@@ -138,7 +139,7 @@ const WatermarkStudio = ({ onBack }) => {
     return localStorage.getItem('net_calc_wm_text') || 'Net Calculate';
   });
   const [fontFamily, setFontFamily] = useState(() => {
-    return localStorage.getItem('net_calc_wm_font') || 'Montserrat';
+    return localStorage.getItem('net_calc_wm_font') || 'Olivia';
   });
   const [color, setColor] = useState(() => {
     return localStorage.getItem('net_calc_wm_color') || '#ffffff';
@@ -307,19 +308,36 @@ const WatermarkStudio = ({ onBack }) => {
     isDraggingRef.current = false;
   };
 
-  const handleTouchStart = (e) => {
-    isDraggingRef.current = true;
-    if (e.touches[0]) {
-      updatePosition(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
+  // Bind non-passive touch listeners to prevent mobile viewport scroll during drag
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  const handleTouchMove = (e) => {
-    if (!isDraggingRef.current) return;
-    if (e.touches[0]) {
-      updatePosition(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
+    const onTouchStart = (e) => {
+      isDraggingRef.current = true;
+      if (e.touches[0]) {
+        updatePosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (!isDraggingRef.current) return;
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      if (e.touches[0]) {
+        updatePosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    container.addEventListener('touchstart', onTouchStart, { passive: false });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+    };
+  }, [isAdjusting]);
 
   // Setup document mouseup listener for smooth drag release
   useEffect(() => {
@@ -519,8 +537,6 @@ const WatermarkStudio = ({ onBack }) => {
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
               >
                 {/* Draggable Watermark Node */}
                 {wmType === 'text' ? (
@@ -611,7 +627,7 @@ const WatermarkStudio = ({ onBack }) => {
                     <div className="wm-control-group" style={{ flex: 1, marginBottom: 0 }}>
                       <label>Font Family</label>
                       <Select
-                        value={FONTS.find((font) => font.value === fontFamily) || FONTS[7]}
+                        value={FONTS.find((font) => font.value === fontFamily) || FONTS[FONTS.length - 1]}
                         onChange={(selectedOption) => setFontFamily(selectedOption ? selectedOption.value : 'sans-serif')}
                         options={FONTS}
                         styles={selectStyles}
