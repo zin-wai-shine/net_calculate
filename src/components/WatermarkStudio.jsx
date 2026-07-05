@@ -470,38 +470,52 @@ const WatermarkStudio = ({ onBack }) => {
     }
   };
 
-  // Detect iOS (iPhone / iPad) — download API saves to Files, not Photos
+  // Detect iOS (iPhone / iPad)
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+  // Check if Web Share API with file sharing is supported
+  const canShareFiles = () => {
+    try {
+      return !!navigator.share && !!navigator.canShare;
+    } catch {
+      return false;
+    }
+  };
+
+  // Convert data URL to a File object for sharing
+  const dataUrlToFile = async (url, fileName) => {
+    const blob = await fetch(url).then(r => r.blob());
+    const dotIdx = fileName.lastIndexOf('.');
+    const name = dotIdx !== -1 ? fileName.substring(0, dotIdx) : fileName;
+    const ext = dotIdx !== -1 ? fileName.substring(dotIdx) : '.png';
+    return new File([blob], `${name}-watermarked${ext}`, { type: blob.type });
+  };
+
   // Download / Save logic
-  const downloadSingleImage = (url, fileName) => {
-    if (isIOS) {
-      // On iOS Safari, <a download> goes to Files, not Photos.
-      // Opening in a new tab lets the user long-press → "Save to Photos"
-      // or tap the Share button → "Save Image".
-      const tab = window.open();
-      if (tab) {
-        tab.document.write(
-          `<html><head><title>Save to Photos</title><meta name="viewport" content="width=device-width,initial-scale=1"/><style>` +
-          `body{margin:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}` +
-          `img{max-width:100vw;max-height:90vh;object-fit:contain;}` +
-          `p{color:#fff;font-family:sans-serif;font-size:14px;text-align:center;padding:12px 16px;opacity:0.8;margin:0;}` +
-          `</style></head><body>` +
-          `<p>📸 Long-press the image below and tap <strong>"Save to Photos"</strong>, or tap the Share button ↑ → <strong>"Save Image"</strong></p>` +
-          `<img src="${url}" alt="Watermarked Image" />` +
-          `</body></html>`
-        );
-        tab.document.close();
+  const downloadSingleImage = async (url, fileName) => {
+    // On iOS with Web Share API: trigger native share sheet directly on this page
+    if (isIOS && canShareFiles()) {
+      try {
+        const file = await dataUrlToFile(url, fileName);
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Watermarked Image',
+          });
+          return;
+        }
+      } catch (err) {
+        // User cancelled or share failed — fall through to normal download
+        if (err.name === 'AbortError') return;
       }
-      return;
     }
 
+    // Non-iOS or fallback: standard anchor download
     const dotIdx = fileName.lastIndexOf('.');
     const name = dotIdx !== -1 ? fileName.substring(0, dotIdx) : fileName;
     const ext = dotIdx !== -1 ? fileName.substring(dotIdx) : '.png';
     const downloadName = `${name}-watermarked${ext}`;
 
-    // Convert data URL → Blob → Object URL for reliable download
     fetch(url)
       .then(r => r.blob())
       .then(blob => {
@@ -524,15 +538,33 @@ const WatermarkStudio = ({ onBack }) => {
       });
   };
 
-  const downloadAll = () => {
-    uploadedFiles.forEach((file, idx) => {
-      const url = watermarkedUrls[idx];
-      if (url) {
-        // Stagger each open by 800ms — iOS blocks multiple tabs if too fast
-        setTimeout(() => {
-          downloadSingleImage(url, file.name);
-        }, idx * 800);
+  const downloadAll = async () => {
+    const readyPairs = uploadedFiles
+      .map((file, idx) => ({ url: watermarkedUrls[idx], name: file.name }))
+      .filter(p => p.url);
+
+    // On iOS with Web Share API: share ALL files at once in one native sheet
+    if (isIOS && canShareFiles() && readyPairs.length > 0) {
+      try {
+        const files = await Promise.all(
+          readyPairs.map(p => dataUrlToFile(p.url, p.name))
+        );
+        if (navigator.canShare({ files })) {
+          await navigator.share({
+            files,
+            title: 'Watermarked Images',
+          });
+          return;
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        // Fall through to staggered single downloads
       }
+    }
+
+    // Non-iOS or fallback: staggered single downloads
+    readyPairs.forEach((p, i) => {
+      setTimeout(() => downloadSingleImage(p.url, p.name), i * 600);
     });
   };
 
@@ -953,7 +985,7 @@ const WatermarkStudio = ({ onBack }) => {
           }}>
             <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>📸</span>
             <span>
-              <strong>Save to Photos on iPhone:</strong> Tap <em>"Save to Photos"</em> above — the image opens in a new tab. Then <strong>long-press the image → "Save to Photos"</strong>, or tap the <strong>Share ↑ → Save Image</strong>.
+              <strong>Save to Photos on iPhone:</strong> Tap <em>"Save to Photos"</em> above — iOS share sheet will open. Tap <strong>"Save Image"</strong> to save directly to your Photos library.
             </span>
           </div>
         )}
