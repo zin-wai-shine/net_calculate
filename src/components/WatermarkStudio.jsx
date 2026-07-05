@@ -362,6 +362,14 @@ const WatermarkStudio = ({ onBack }) => {
     setWatermarkedUrls(prev => [...prev, ...files.map(() => null)]);
   };
 
+  const clearAllFiles = () => {
+    rawPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    setUploadedFiles([]);
+    setRawPreviewUrls([]);
+    setWatermarkedUrls([]);
+    setActivePreviewIndex(0);
+  };
+
   const removeUploadedFile = (index) => {
     if (rawPreviewUrls[index]) {
       URL.revokeObjectURL(rawPreviewUrls[index]);
@@ -867,6 +875,39 @@ const WatermarkStudio = ({ onBack }) => {
       {/* Page Body */}
       <div className="watermark-studio-body">
         {/* Large Scrollable Previews (above and outside the card container) */}
+        {uploadedFiles.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+            <button
+              onClick={clearAllFiles}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.4rem 0.85rem',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '8px',
+                color: '#f87171',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+              }}
+              title="Clear all uploaded photos"
+            >
+              <Trash2 size={13} />
+              Clear All Photos
+            </button>
+          </div>
+        )}
         {uploadedFiles.length > 0 && (
           <div className="wm-large-previews-container">
             {uploadedFiles.map((file, idx) => (
