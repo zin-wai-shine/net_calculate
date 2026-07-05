@@ -470,8 +470,32 @@ const WatermarkStudio = ({ onBack }) => {
     }
   };
 
-  // Download logic — converts data URL to Blob for reliable browser download
+  // Detect iOS (iPhone / iPad) — download API saves to Files, not Photos
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // Download / Save logic
   const downloadSingleImage = (url, fileName) => {
+    if (isIOS) {
+      // On iOS Safari, <a download> goes to Files, not Photos.
+      // Opening in a new tab lets the user long-press → "Save to Photos"
+      // or tap the Share button → "Save Image".
+      const tab = window.open();
+      if (tab) {
+        tab.document.write(
+          `<html><head><title>Save to Photos</title><meta name="viewport" content="width=device-width,initial-scale=1"/><style>` +
+          `body{margin:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}` +
+          `img{max-width:100vw;max-height:90vh;object-fit:contain;}` +
+          `p{color:#fff;font-family:sans-serif;font-size:14px;text-align:center;padding:12px 16px;opacity:0.8;margin:0;}` +
+          `</style></head><body>` +
+          `<p>📸 Long-press the image below and tap <strong>"Save to Photos"</strong>, or tap the Share button ↑ → <strong>"Save Image"</strong></p>` +
+          `<img src="${url}" alt="Watermarked Image" />` +
+          `</body></html>`
+        );
+        tab.document.close();
+      }
+      return;
+    }
+
     const dotIdx = fileName.lastIndexOf('.');
     const name = dotIdx !== -1 ? fileName.substring(0, dotIdx) : fileName;
     const ext = dotIdx !== -1 ? fileName.substring(dotIdx) : '.png';
@@ -491,7 +515,6 @@ const WatermarkStudio = ({ onBack }) => {
         setTimeout(() => URL.revokeObjectURL(blobUrl), 500);
       })
       .catch(() => {
-        // Fallback: direct href download
         const link = document.createElement('a');
         link.href = url;
         link.download = downloadName;
@@ -505,10 +528,10 @@ const WatermarkStudio = ({ onBack }) => {
     uploadedFiles.forEach((file, idx) => {
       const url = watermarkedUrls[idx];
       if (url) {
-        // Stagger each download by 600ms to avoid browser blocking
+        // Stagger each open by 800ms — iOS blocks multiple tabs if too fast
         setTimeout(() => {
           downloadSingleImage(url, file.name);
-        }, idx * 600);
+        }, idx * 800);
       }
     });
   };
@@ -908,8 +931,30 @@ const WatermarkStudio = ({ onBack }) => {
               }}
             >
               <Download size={16} />
-              Download All
+              {isIOS ? 'Save to Photos' : 'Download All'}
             </button>
+          </div>
+        )}
+
+        {/* iOS Save-to-Photos instruction banner */}
+        {isIOS && watermarkedUrls.some(u => u !== null) && (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            marginBottom: '1rem',
+            fontSize: '0.8rem',
+            color: 'var(--text-primary)',
+            lineHeight: 1.5,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>📸</span>
+            <span>
+              <strong>Save to Photos on iPhone:</strong> Tap <em>"Save to Photos"</em> above — the image opens in a new tab. Then <strong>long-press the image → "Save to Photos"</strong>, or tap the <strong>Share ↑ → Save Image</strong>.
+            </span>
           </div>
         )}
 
@@ -1037,7 +1082,7 @@ const WatermarkStudio = ({ onBack }) => {
             alt="Fullscreen Lightbox Preview"
             style={{
               maxWidth: '95vw',
-              maxHeight: '95vh',
+              maxHeight: '92vh',
               objectFit: 'contain',
               borderRadius: '8px',
               boxShadow: '0 12px 48px rgba(0,0,0,0.8)',
@@ -1045,6 +1090,22 @@ const WatermarkStudio = ({ onBack }) => {
             }}
             onClick={(e) => e.stopPropagation()}
           />
+          {/* iOS hint inside lightbox */}
+          {isIOS && watermarkedUrls[lightboxIndex] && (
+            <p style={{
+              position: 'absolute',
+              bottom: '16px',
+              left: 0,
+              right: 0,
+              textAlign: 'center',
+              color: 'rgba(255,255,255,0.75)',
+              fontSize: '0.78rem',
+              pointerEvents: 'none',
+              padding: '0 1rem'
+            }}>
+              📸 Long-press image → <strong style={{color:'#fff'}}>"Save to Photos"</strong>
+            </p>
+          )}
         </div>,
         document.body
       )}
