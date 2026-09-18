@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import CalculatorCard from './components/CalculatorCard';
 import WatermarkStudio from './components/WatermarkStudio';
+import TextEditor from './components/TextEditor';
 
 function App() {
-  const [currentView, setCurrentView] = useState('calculator'); // 'calculator' | 'watermark'
+  const [currentView, setCurrentView] = useState('calculator'); // 'calculator' | 'watermark' | 'text-editor'
   // Lazy state initialization from LocalStorage
   const [exchangeRate, setExchangeRate] = useState(() => {
     const saved = localStorage.getItem('net_calc_exchange_rate');
@@ -80,7 +81,12 @@ function App() {
     <div className="app-wrapper">
       {currentView === 'calculator' ? (
         <>
-          <Header theme={theme} onChangeTheme={setTheme} onOpenWatermark={() => setCurrentView('watermark')} />
+          <Header
+            theme={theme}
+            onChangeTheme={setTheme}
+            onOpenWatermark={() => setCurrentView('watermark')}
+            onOpenTextEditor={() => setCurrentView('text-editor')}
+          />
           <main className="calculator-grid">
             <div className="calculator-container">
               <CalculatorCard
@@ -96,8 +102,10 @@ function App() {
             </div>
           </main>
         </>
-      ) : (
+      ) : currentView === 'watermark' ? (
         <WatermarkStudio onBack={() => setCurrentView('calculator')} />
+      ) : (
+        <TextEditor onBack={() => setCurrentView('calculator')} />
       )}
 
       <footer className="footer-text">
