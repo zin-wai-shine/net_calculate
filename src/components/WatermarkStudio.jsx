@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Select from 'react-select';
-import { ArrowLeft, Upload, Download, Type, Image as ImageIcon, Move, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Upload, Download, Type, Image as ImageIcon, Move, Sparkles, Trash2, Grid, RotateCw } from 'lucide-react';
 
 const PRESET_COLORS = [
   '#ffffff', // White
@@ -180,6 +180,112 @@ const WatermarkStudio = ({ onBack }) => {
     return saved ? parseFloat(saved) : 50;
   });
 
+  // Layout Pattern & Rotation States
+  const [layoutMode, setLayoutMode] = useState(() => {
+    return localStorage.getItem('net_calc_wm_layout_mode') || 'pattern';
+  });
+  const [patternRows, setPatternRows] = useState(() => {
+    const saved = localStorage.getItem('net_calc_wm_rows');
+    return saved ? parseInt(saved, 10) : 2;
+  });
+  const [patternCols, setPatternCols] = useState(() => {
+    const saved = localStorage.getItem('net_calc_wm_cols');
+    return saved ? parseInt(saved, 10) : 10;
+  });
+  // Gap is stored as % of image dimension (0–80). This scales correctly
+  // regardless of whether the image is 500px or 5000px wide.
+  const [patternGapX, setPatternGapX] = useState(() => {
+    const saved = localStorage.getItem('net_calc_wm_gap_x_pct');
+    return saved ? parseInt(saved, 10) : 5;
+  });
+  const [rotation, setRotation] = useState(() => {
+    const saved = localStorage.getItem('net_calc_wm_rotation');
+    return saved !== null ? parseInt(saved, 10) : 0;
+  });
+  const [patternStagger, setPatternStagger] = useState(() => {
+    const saved = localStorage.getItem('net_calc_wm_stagger');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  // Track the actual pixel size of the preview container so preview gaps
+  // can be computed as the same % of preview width as the canvas uses
+  const [previewPxW, setPreviewPxW] = useState(320);
+
+  // Quick Style Presets — 4 ready-to-use professional configurations + Single
+  const PRESET_STYLES = [
+    {
+      id: 'two_rows_0',
+      label: 'Top & Bottom (0°)',
+      active: layoutMode === 'pattern' && patternRows === 2 && patternCols === 10 && patternGapX === 5 && rotation === 0,
+      apply: () => {
+        setLayoutMode('pattern');
+        setPatternRows(2);
+        setPatternCols(10);
+        setPatternGapX(5);
+        setRotation(0);
+        setX(50);
+        setY(50);
+        setPatternStagger(true);
+      }
+    },
+    {
+      id: 'two_rows_neg45',
+      label: 'Top & Bottom (-45°)',
+      active: layoutMode === 'pattern' && patternRows === 2 && patternCols === 10 && patternGapX === 5 && rotation === -45,
+      apply: () => {
+        setLayoutMode('pattern');
+        setPatternRows(2);
+        setPatternCols(10);
+        setPatternGapX(5);
+        setRotation(-45);
+        setX(50);
+        setY(50);
+        setPatternStagger(true);
+      }
+    },
+    {
+      id: 'five_rows_0',
+      label: '5-Row Grid (0°)',
+      active: layoutMode === 'pattern' && patternRows === 5 && patternCols === 10 && patternGapX === 5 && rotation === 0,
+      apply: () => {
+        setLayoutMode('pattern');
+        setPatternRows(5);
+        setPatternCols(10);
+        setPatternGapX(5);
+        setRotation(0);
+        setX(50);
+        setY(50);
+        setPatternStagger(true);
+      }
+    },
+    {
+      id: 'five_rows_neg45',
+      label: '5-Row Cross (-45°)',
+      active: layoutMode === 'pattern' && patternRows === 5 && patternCols === 10 && patternGapX === 5 && rotation === -45,
+      apply: () => {
+        setLayoutMode('pattern');
+        setPatternRows(5);
+        setPatternCols(10);
+        setPatternGapX(5);
+        setRotation(-45);
+        setX(50);
+        setY(50);
+        setPatternStagger(true);
+      }
+    },
+    {
+      id: 'single_mark',
+      label: 'Single Mark',
+      active: layoutMode === 'single',
+      apply: () => {
+        setLayoutMode('single');
+        setRotation(0);
+        setX(50);
+        setY(50);
+      }
+    }
+  ];
+
   // Image Processing States
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [rawPreviewUrls, setRawPreviewUrls] = useState([]);
@@ -190,6 +296,7 @@ const WatermarkStudio = ({ onBack }) => {
   const [isAdjusting, setIsAdjusting] = useState(false);
 
   const containerRef = useRef(null);
+  const previewWrapperRef = useRef(null);
   const isDraggingRef = useRef(false);
 
   // Sync general configurations
@@ -221,7 +328,6 @@ const WatermarkStudio = ({ onBack }) => {
     localStorage.setItem('net_calc_wm_is_bold', isBold.toString());
   }, [isBold]);
 
-
   useEffect(() => {
     localStorage.setItem('net_calc_wm_logo_width', logoWidth.toString());
   }, [logoWidth]);
@@ -234,6 +340,48 @@ const WatermarkStudio = ({ onBack }) => {
     localStorage.setItem('net_calc_wm_x', x.toString());
     localStorage.setItem('net_calc_wm_y', y.toString());
   }, [x, y]);
+
+  useEffect(() => {
+    localStorage.setItem('net_calc_wm_layout_mode', layoutMode);
+  }, [layoutMode]);
+
+  useEffect(() => {
+    localStorage.setItem('net_calc_wm_rows', patternRows.toString());
+  }, [patternRows]);
+
+  useEffect(() => {
+    localStorage.setItem('net_calc_wm_cols', patternCols.toString());
+  }, [patternCols]);
+
+  useEffect(() => {
+    localStorage.setItem('net_calc_wm_gap_x_pct', patternGapX.toString());
+  }, [patternGapX]);
+
+  // Measure preview wrapper dimensions whenever isAdjusting opens
+  useEffect(() => {
+    if (!isAdjusting) return;
+    const measure = () => {
+      if (previewWrapperRef.current) {
+        const rect = previewWrapperRef.current.getBoundingClientRect();
+        setPreviewPxW(rect.width || 320);
+      }
+    };
+    // Measure after layout
+    const id = setTimeout(measure, 50);
+    window.addEventListener('resize', measure);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener('resize', measure);
+    };
+  }, [isAdjusting]);
+
+  useEffect(() => {
+    localStorage.setItem('net_calc_wm_rotation', rotation.toString());
+  }, [rotation]);
+
+  useEffect(() => {
+    localStorage.setItem('net_calc_wm_stagger', patternStagger.toString());
+  }, [patternStagger]);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -285,14 +433,16 @@ const WatermarkStudio = ({ onBack }) => {
   };
 
   // Drag and Drop implementation
-  const updatePosition = (clientX, clientY) => {
+  const updatePosition = useCallback((clientX, clientY) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const newX = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-    const newY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
     setX(newX);
-    setY(newY);
-  };
+    if (layoutMode !== 'pattern') {
+      const newY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+      setY(newY);
+    }
+  }, [layoutMode]);
 
   const handleMouseDown = (e) => {
     isDraggingRef.current = true;
@@ -337,7 +487,7 @@ const WatermarkStudio = ({ onBack }) => {
       container.removeEventListener('touchstart', onTouchStart);
       container.removeEventListener('touchmove', onTouchMove);
     };
-  }, [isAdjusting]);
+  }, [isAdjusting, updatePosition]);
 
   // Setup document mouseup listener for smooth drag release
   useEffect(() => {
@@ -436,34 +586,100 @@ const WatermarkStudio = ({ onBack }) => {
 
         // Position coordinates
         const px = (x / 100) * imgWidth;
-        const py = (y / 100) * imgHeight;
+        const py = layoutMode === 'pattern' ? 0.50 * imgHeight : (y / 100) * imgHeight;
+
+        const rows = layoutMode === 'pattern' ? patternRows : 1;
+        const cols = layoutMode === 'pattern' ? patternCols : 1;
+        // Gap is stored as % of image dimension so it always scales
+        const canvasGapX = (patternGapX / 100) * imgWidth;
+
+        ctx.save();
+        ctx.translate(px, py);
+        if (rotation !== 0) {
+          ctx.rotate((rotation * Math.PI) / 180);
+        }
 
         if (wmType === 'text') {
           const scaledFontSize = (size / 500) * imgWidth;
-          ctx.save();
           ctx.globalAlpha = opacity;
           ctx.font = `${isBold ? 'bold ' : ''}${scaledFontSize}px "${fontFamily}", sans-serif`;
           ctx.fillStyle = color;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(text, px, py);
-          ctx.restore();
+
+          const metrics = ctx.measureText(text || ' ');
+          const itemW = metrics.width;
+          const itemH = scaledFontSize;
+          // Standard proportional margin (4% of height, min 8px)
+          const padY = Math.max(8, imgHeight * 0.04);
+          const topY = itemH / 2 + padY;
+          const bottomY = imgHeight - itemH / 2 - padY;
+          const totalSpan = Math.max(0, bottomY - topY);
+          const rowSpacing = rows > 1 ? totalSpan / (rows - 1) : 0;
+
+          for (let r = 0; r < rows; r++) {
+            let rCenterY;
+            if (layoutMode === 'pattern') {
+              if (rows === 1) {
+                rCenterY = bottomY - (imgHeight / 2);
+              } else {
+                rCenterY = (topY + r * rowSpacing) - (imgHeight / 2);
+              }
+            } else {
+              rCenterY = 0;
+            }
+
+            for (let c = 0; c < cols; c++) {
+              let cCenterX = (c - (cols - 1) / 2) * (itemW + canvasGapX);
+              if (layoutMode === 'pattern' && patternStagger && r % 2 === 1) {
+                cCenterX += (itemW + canvasGapX) / 2;
+              }
+              ctx.fillText(text || '', cCenterX, rCenterY);
+            }
+          }
         } else if (wmType === 'logo' && logoImgElement) {
           const scaledLogoWidth = (logoWidth / 500) * imgWidth;
           const aspect = logoImgElement.naturalHeight / logoImgElement.naturalWidth;
           const scaledLogoHeight = scaledLogoWidth * aspect;
 
-          ctx.save();
           ctx.globalAlpha = logoOpacity;
-          ctx.drawImage(
-            logoImgElement,
-            px - scaledLogoWidth / 2,
-            py - scaledLogoHeight / 2,
-            scaledLogoWidth,
-            scaledLogoHeight
-          );
-          ctx.restore();
+          const itemW = scaledLogoWidth;
+          const itemH = scaledLogoHeight;
+          // Standard proportional margin (4% of height, min 8px)
+          const padY = Math.max(8, imgHeight * 0.04);
+          const topY = itemH / 2 + padY;
+          const bottomY = imgHeight - itemH / 2 - padY;
+          const totalSpan = Math.max(0, bottomY - topY);
+          const rowSpacing = rows > 1 ? totalSpan / (rows - 1) : 0;
+
+          for (let r = 0; r < rows; r++) {
+            let rCenterY;
+            if (layoutMode === 'pattern') {
+              if (rows === 1) {
+                rCenterY = bottomY - (imgHeight / 2);
+              } else {
+                rCenterY = (topY + r * rowSpacing) - (imgHeight / 2);
+              }
+            } else {
+              rCenterY = 0;
+            }
+
+            for (let c = 0; c < cols; c++) {
+              let cCenterX = (c - (cols - 1) / 2) * (itemW + canvasGapX);
+              if (layoutMode === 'pattern' && patternStagger && r % 2 === 1) {
+                cCenterX += (itemW + canvasGapX) / 2;
+              }
+              ctx.drawImage(
+                logoImgElement,
+                cCenterX - itemW / 2,
+                rCenterY - itemH / 2,
+                itemW,
+                itemH
+              );
+            }
+          }
         }
+        ctx.restore();
 
         const watermarkedUrl = canvas.toDataURL(file.type || 'image/png');
         results.push(watermarkedUrl);
@@ -593,7 +809,24 @@ const WatermarkStudio = ({ onBack }) => {
         <div className="watermark-studio-body" style={{ marginTop: '0.5rem' }}>
           {/* Workspace preview box */}
           <div className="wm-workspace-panel">
-            <div className="wm-preview-wrapper">
+            <div className="wm-preview-wrapper" style={{ position: 'relative', overflow: 'hidden' }} ref={previewWrapperRef}>
+              {/* If an image is uploaded, display it as background */}
+              {rawPreviewUrls.length > 0 && rawPreviewUrls[activePreviewIndex] && (
+                <img
+                  src={rawPreviewUrls[activePreviewIndex]}
+                  alt="Preview Background"
+                  className="wm-preview-image"
+                  style={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    pointerEvents: 'none',
+                    opacity: 0.85
+                  }}
+                />
+              )}
+
               <div
                 className="wm-draggable-container"
                 ref={containerRef}
@@ -601,54 +834,347 @@ const WatermarkStudio = ({ onBack }) => {
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
               >
-                {/* Draggable Watermark Node */}
-                {wmType === 'text' ? (
-                  <div
-                    className={`wm-draggable-element ${isDraggingRef.current ? 'is-dragging' : ''}`}
-                    style={{
-                      left: `${x}%`,
-                      top: `${y}%`,
-                      fontFamily: `"${fontFamily}", sans-serif`,
-                      fontSize: `${size}px`,
-                      fontWeight: isBold ? 'bold' : 'normal',
-                      color: color,
-                      opacity: opacity
-                    }}
-                  >
-                    {text}
-                  </div>
-                ) : (
-                  logoUrl && (
+                {/* Draggable Watermark Node / Pattern Group */}
+                {(() => {
+                  const isPattern = layoutMode === 'pattern';
+                  // Compute preview column gaps as % of preview width
+                  const pgxPx = isPattern ? (patternGapX / 100) * previewPxW : 0;
+                  const estItemWidth = wmType === 'text'
+                    ? Math.max(24, (text || 'Net Calculate').length * size * 0.52)
+                    : logoWidth;
+
+                  return (
                     <div
                       className={`wm-draggable-element ${isDraggingRef.current ? 'is-dragging' : ''}`}
                       style={{
                         left: `${x}%`,
-                        top: `${y}%`,
-                        opacity: logoOpacity
+                        top: isPattern ? '50%' : `${y}%`,
+                        height: isPattern ? 'calc(100% - 16px)' : 'auto',
+                        boxSizing: 'border-box',
+                        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: isPattern
+                          ? (patternRows === 1 ? 'flex-end' : 'space-between')
+                          : 'center',
+                        alignItems: 'center',
+                        border: '1px dashed rgba(99, 179, 237, 0.65)',
+                        background: isDraggingRef.current ? 'rgba(99, 179, 237, 0.2)' : 'rgba(0, 0, 0, 0.3)',
+                        backdropFilter: 'blur(2px)',
+                        padding: isPattern ? '6px 10px' : '8px 12px',
+                        borderRadius: '6px',
+                        cursor: 'move',
+                        userSelect: 'none',
+                        transition: isDraggingRef.current ? 'none' : 'box-shadow 0.2s ease, transform 0.1s ease',
+                        boxShadow: isDraggingRef.current ? '0 0 18px rgba(99, 179, 237, 0.45)' : 'none'
                       }}
                     >
-                      <img
-                        src={logoUrl}
-                        alt="Watermark Logo"
-                        className="wm-draggable-logo"
-                        style={{
-                          width: `${logoWidth}px`,
-                          height: 'auto'
-                        }}
-                      />
+                      {Array.from({ length: layoutMode === 'pattern' ? patternRows : 1 }).map((_, rIdx) => {
+                        const staggerShift = (pgxPx + estItemWidth) / 2;
+                        return (
+                          <div
+                            key={rIdx}
+                            style={{
+                              display: 'flex',
+                              gap: `${pgxPx}px`,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transform: (layoutMode === 'pattern' && patternStagger && rIdx % 2 === 1)
+                                ? `translateX(${staggerShift}px)`
+                                : 'none'
+                            }}
+                          >
+                            {Array.from({ length: layoutMode === 'pattern' ? patternCols : 1 }).map((_, cIdx) => (
+                              <div
+                                key={cIdx}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  pointerEvents: 'none',
+                                  lineHeight: 1
+                                }}
+                              >
+                                {wmType === 'text' ? (
+                                  <span
+                                    style={{
+                                      fontFamily: `"${fontFamily}", sans-serif`,
+                                      fontSize: `${size}px`,
+                                      fontWeight: isBold ? 'bold' : 'normal',
+                                      color: color,
+                                      opacity: opacity,
+                                      whiteSpace: 'nowrap',
+                                      textShadow: '0 1px 3px rgba(0,0,0,0.85)'
+                                    }}
+                                  >
+                                    {text || 'Net Calculate'}
+                                  </span>
+                                ) : (
+                                  logoUrl ? (
+                                    <img
+                                      src={logoUrl}
+                                      alt="Watermark Logo"
+                                      className="wm-draggable-logo"
+                                      style={{
+                                        width: `${logoWidth}px`,
+                                        height: 'auto',
+                                        opacity: logoOpacity,
+                                        filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.7))'
+                                      }}
+                                    />
+                                  ) : (
+                                    <span style={{ fontSize: '12px', color: '#ccc' }}>Upload Logo</span>
+                                  )
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )
-                )}
+                  );
+                })()}
               </div>
             </div>
 
             <p className="wm-workspace-instruction">
-              <Move size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Hold and drag watermark inside the box to adjust placement
+              <Move size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Hold and drag watermark anywhere in the box to adjust placement
             </p>
           </div>
 
           {/* Configuration Card */}
           <div className="wm-controls-panel">
+            {/* Watermark Design & Layout Card — simplified for mobile */}
+            <div className="wm-section-card">
+              <div className="wm-section-title">Watermark Layout & Pattern</div>
+
+              {/* Layout Mode Selector */}
+              <div className="wm-layout-selector">
+                <button
+                  type="button"
+                  className={`wm-layout-btn ${layoutMode === 'single' ? 'active' : ''}`}
+                  onClick={() => setLayoutMode('single')}
+                >
+                  <Move size={14} />
+                  Single
+                </button>
+                <button
+                  type="button"
+                  className={`wm-layout-btn ${layoutMode === 'pattern' ? 'active' : ''}`}
+                  onClick={() => setLayoutMode('pattern')}
+                >
+                  <Grid size={14} />
+                  Grid / Cross
+                </button>
+              </div>
+
+              {/* Quick Style Presets */}
+              <div className="wm-presets-wrapper">
+                {PRESET_STYLES.map(preset => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={`wm-preset-chip ${preset.active ? 'active' : ''}`}
+                    onClick={() => preset.apply()}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Pattern Controls — only in pattern mode */}
+              {layoutMode === 'pattern' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Rows & Cols as simple big steppers side by side */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    {/* Rows stepper */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Rows</span>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-color)' }}>
+                          {patternRows === 1 ? 'Bottom' : patternRows === 2 ? 'Top & Bottom' : patternRows === 3 ? 'Top, Mid, Bottom' : `${patternRows} Auto Spaced`}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--input-bg)', border: '1px solid var(--card-border)', borderRadius: '10px', padding: '0.35rem' }}>
+                        <button
+                          type="button"
+                          className="wm-stepper-btn"
+                          style={{ width: '36px', height: '36px', borderRadius: '7px', fontSize: '1.2rem' }}
+                          onClick={() => setPatternRows(r => Math.max(1, r - 1))}
+                          disabled={patternRows <= 1}
+                        >−</button>
+                        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)', minWidth: '24px', textAlign: 'center' }}>{patternRows}</span>
+                        <button
+                          type="button"
+                          className="wm-stepper-btn"
+                          style={{ width: '36px', height: '36px', borderRadius: '7px', fontSize: '1.2rem' }}
+                          onClick={() => setPatternRows(r => Math.min(10, r + 1))}
+                          disabled={patternRows >= 10}
+                        >+</button>
+                      </div>
+                    </div>
+
+                    {/* Cols stepper */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Columns</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--input-bg)', border: '1px solid var(--card-border)', borderRadius: '10px', padding: '0.35rem' }}>
+                        <button
+                          type="button"
+                          className="wm-stepper-btn"
+                          style={{ width: '36px', height: '36px', borderRadius: '7px', fontSize: '1.2rem' }}
+                          onClick={() => setPatternCols(c => Math.max(1, c - 1))}
+                          disabled={patternCols <= 1}
+                        >−</button>
+                        <span style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)', minWidth: '24px', textAlign: 'center' }}>{patternCols}</span>
+                        <button
+                          type="button"
+                          className="wm-stepper-btn"
+                          style={{ width: '36px', height: '36px', borderRadius: '7px', fontSize: '1.2rem' }}
+                          onClick={() => setPatternCols(c => Math.min(10, c + 1))}
+                          disabled={patternCols >= 10}
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column Gap */}
+                  <div className="wm-control-group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>Column Gap</label>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-color)' }}>{patternGapX}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="200"
+                      className="wm-slider"
+                      style={{ width: '100%' }}
+                      value={patternGapX}
+                      onChange={e => setPatternGapX(parseInt(e.target.value, 10))}
+                    />
+                  </div>
+
+                  {/* Stagger toggle */}
+                  <label className="wm-checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={patternStagger}
+                      onChange={e => setPatternStagger(e.target.checked)}
+                    />
+                    <span>Shift alternate rows (diagonal cross effect)</span>
+                  </label>
+                </div>
+              )}
+
+              {/* Divider */}
+              <div style={{ borderTop: '1px solid var(--card-border)', marginTop: '0.25rem', paddingTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                {/* Rotation */}
+                <div className="wm-control-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <RotateCw size={13} /> Rotation
+                    </label>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-color)' }}>{rotation}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-180"
+                    max="180"
+                    step="5"
+                    className="wm-slider"
+                    style={{ width: '100%' }}
+                    value={rotation}
+                    onChange={e => setRotation(parseInt(e.target.value, 10))}
+                  />
+                  {/* Angle quick chips */}
+                  <div className="wm-chips-row">
+                    {[
+                      { label: '0°', val: 0 },
+                      { label: '45°', val: 45 },
+                      { label: '-45°', val: -45 },
+                      { label: '30°', val: 30 },
+                      { label: '90°', val: 90 }
+                    ].map(item => (
+                      <button
+                        key={item.val}
+                        type="button"
+                        className={`wm-chip-btn ${rotation === item.val ? 'active' : ''}`}
+                        onClick={() => setRotation(item.val)}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Visual position picker */}
+                <div className="wm-control-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label>Position</label>
+                    {layoutMode === 'pattern' && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--accent-color)', fontWeight: 600 }}>
+                        Rows auto-spaced vertically
+                      </span>
+                    )}
+                  </div>
+                  {layoutMode === 'pattern' ? (
+                    <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '280px' }}>
+                      {[
+                        { label: 'Left', posX: 15 },
+                        { label: 'Center', posX: 50 },
+                        { label: 'Right', posX: 85 }
+                      ].map(p => {
+                        const isActive = Math.abs(Math.round(x) - p.posX) <= 10;
+                        return (
+                          <button
+                            key={p.label}
+                            type="button"
+                            className={`wm-chip-btn ${isActive ? 'active' : ''}`}
+                            style={{ flex: 1, padding: '0.55rem 0.5rem', fontWeight: 600, fontSize: '0.85rem' }}
+                            onClick={() => setX(p.posX)}
+                          >
+                            {p.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', maxWidth: '180px' }}>
+                      {[
+                        { label: '↖', posX: 15, posY: 15 },
+                        { label: '↑', posX: 50, posY: 15 },
+                        { label: '↗', posX: 85, posY: 15 },
+                        { label: '←', posX: 15, posY: 50 },
+                        { label: '⊕', posX: 50, posY: 50 },
+                        { label: '→', posX: 85, posY: 50 },
+                        { label: '↙', posX: 15, posY: 85 },
+                        { label: '↓', posX: 50, posY: 85 },
+                        { label: '↘', posX: 85, posY: 85 }
+                      ].map(p => {
+                        const isActive = Math.abs(Math.round(x) - p.posX) <= 5 && Math.abs(Math.round(y) - p.posY) <= 5;
+                        return (
+                          <button
+                            key={p.label}
+                            type="button"
+                            className={`wm-position-btn ${isActive ? 'active' : ''}`}
+                            style={{ height: '36px', fontSize: '1rem' }}
+                            onClick={() => { setX(p.posX); setY(p.posY); }}
+                            title={`Place at (${p.posX}%, ${p.posY}%)`}
+                          >
+                            {p.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                    {layoutMode === 'pattern' ? 'Slide watermark horizontally or tap Left / Center / Right' : 'Or drag the watermark in the preview box above'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Existing Style Configuration Card */}
             <div className="wm-section-card">
               <div className="wm-section-title">Customize Watermark Type & Styles</div>
 
@@ -1057,34 +1583,77 @@ const WatermarkStudio = ({ onBack }) => {
                 background: 'var(--wm-preview-bg)',
                 border: '1px dashed var(--card-border)',
                 borderRadius: '8px',
-                padding: '10px 16px',
-                minHeight: '56px',
-                minWidth: '100px',
+                padding: '10px 14px',
+                minHeight: '64px',
+                minWidth: '110px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: wmType === 'text' ? `${Math.min(size, 20)}px` : 'inherit',
-                fontFamily: wmType === 'text' ? `"${fontFamily}", sans-serif` : 'inherit',
-                fontWeight: (wmType === 'text' && isBold) ? 'bold' : 'normal',
-                color: wmType === 'text' ? color : 'inherit',
-                opacity: wmType === 'text' ? opacity : logoOpacity
+                overflow: 'hidden',
+                position: 'relative'
               }}>
-                {wmType === 'text' ? (
-                  text || "Hello World"
-                ) : (
-                  logoUrl ? (
-                    <img src={logoUrl} alt="Logo Preview" style={{ maxHeight: '36px', width: 'auto' }} />
-                  ) : (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No Logo</span>
-                  )
-                )}
+                <div style={{
+                  transform: `rotate(${rotation}deg) scale(0.85)`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: layoutMode === 'pattern' ? '4px' : '0',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {Array.from({ length: layoutMode === 'pattern' ? Math.min(patternRows, 3) : 1 }).map((_, r) => (
+                    <div
+                      key={r}
+                      style={{
+                        display: 'flex',
+                        gap: layoutMode === 'pattern' ? '6px' : '0',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transform: (layoutMode === 'pattern' && patternStagger && r % 2 === 1) ? 'translateX(6px)' : 'none'
+                      }}
+                    >
+                      {Array.from({ length: layoutMode === 'pattern' ? Math.min(patternCols, 3) : 1 }).map((_, c) => (
+                        <div key={c} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {wmType === 'text' ? (
+                            <span style={{
+                              fontSize: `${Math.min(size, 12)}px`,
+                              fontFamily: `"${fontFamily}", sans-serif`,
+                              fontWeight: isBold ? 'bold' : 'normal',
+                              color: color,
+                              opacity: opacity,
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {text || 'Net Calculate'}
+                            </span>
+                          ) : (
+                            logoUrl ? (
+                              <img
+                                src={logoUrl}
+                                alt="Logo"
+                                style={{
+                                  maxHeight: '18px',
+                                  width: 'auto',
+                                  opacity: logoOpacity
+                                }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No Logo</span>
+                            )
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Type: {wmType === 'text' ? 'Text Watermark' : 'Logo Watermark'}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {wmType === 'text' ? 'Text Watermark' : 'Logo Watermark'} — {layoutMode === 'pattern' ? `Cross Grid (${patternRows} rows × ${patternCols} cols, ${rotation}°)` : `Single (${rotation}°)`}
                 </span>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  {wmType === 'text' ? `Font: ${fontFamily} | Size: ${size}px${isBold ? ' (Bold)' : ''}` : `Width: ${logoWidth}px`}
+                  {layoutMode === 'pattern' ? `Auto Rows (${patternRows}r) • Col Gap: ${patternGapX}%${patternStagger ? ' • Staggered' : ''}` : `Position: (${Math.round(x)}%, ${Math.round(y)}%)`}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {wmType === 'text' ? `Font: ${fontFamily} • Size: ${size}px${isBold ? ' (Bold)' : ''}` : `Width: ${logoWidth}px`}
                 </span>
               </div>
             </div>
