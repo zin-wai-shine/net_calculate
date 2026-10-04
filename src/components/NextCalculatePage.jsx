@@ -620,9 +620,6 @@ const NextCalculatePage = ({ onBack }) => {
                 {/* Group Card Top Bar */}
                 <div className="calc-group-card-header">
                   <div className="calc-group-header-left">
-                    {groups.length > 1 && (
-                      <span className="calc-group-tag">Group {groupIdx + 1}</span>
-                    )}
                     <label className="calc-group-date-wrap" title="Click to change date">
                       <Calendar size={13} className="calc-date-icon" />
                       <span className="calc-date-text">{formattedDate}</span>

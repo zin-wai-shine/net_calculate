@@ -2516,23 +2516,6 @@ body {
   margin: 0;
 }
 
-.calc-group-tag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.04);
-}
-
-[data-theme="dark"] .calc-group-tag,
-.theme-dark .calc-group-tag {
-  background: rgba(255, 255, 255, 0.08);
-}
 
 .calc-group-header-right {
   display: flex;
