@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Image, Info, Type } from 'lucide-react';
+import { Settings, Image, Info, Type, Calculator } from 'lucide-react';
 
-const Header = ({ theme, onChangeTheme, onOpenWatermark, onOpenTextEditor }) => {
+const Header = ({ theme, onChangeTheme, onOpenWatermark, onOpenTextEditor, onOpenCalculate }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -37,7 +37,7 @@ const Header = ({ theme, onChangeTheme, onOpenWatermark, onOpenTextEditor }) => 
             ref={infoRef}
             onMouseEnter={() => setIsInfoOpen(true)}
             onMouseLeave={() => setIsInfoOpen(false)}
-          >
+            >
             <button
               type="button"
               className="brand-info-btn"
@@ -55,6 +55,16 @@ const Header = ({ theme, onChangeTheme, onOpenWatermark, onOpenTextEditor }) => 
       </div>
 
       <div className="header-controls-container">
+        <button
+          className="btn btn-glass btn-icon-only"
+          onClick={onOpenCalculate}
+          title="Calculate"
+          aria-label="Calculate"
+          style={{ width: '36px', height: '36px', padding: 0 }}
+        >
+          <Calculator size={16} />
+        </button>
+
         <button
           className="btn btn-glass btn-icon-only"
           onClick={onOpenTextEditor}

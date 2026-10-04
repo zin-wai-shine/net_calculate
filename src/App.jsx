@@ -3,9 +3,16 @@ import Header from './components/Header';
 import CalculatorCard from './components/CalculatorCard';
 import WatermarkStudio from './components/WatermarkStudio';
 import TextEditor from './components/TextEditor';
+import NextCalculatePage from './components/NextCalculatePage';
+import PermissionModal from './components/PermissionModal';
 
 function App() {
-  const [currentView, setCurrentView] = useState('calculator'); // 'calculator' | 'watermark' | 'text-editor'
+  const [currentView, setCurrentView] = useState('calculator'); // 'calculator' | 'watermark' | 'text-editor' | 'next-calculate'
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+  const [isCalculateUnlocked, setIsCalculateUnlocked] = useState(() => {
+    return localStorage.getItem('net_calc_permission_unlocked') === 'true';
+  });
+
   // Lazy state initialization from LocalStorage
   const [exchangeRate, setExchangeRate] = useState(() => {
     const saved = localStorage.getItem('net_calc_exchange_rate');
@@ -77,6 +84,20 @@ function App() {
     }
   }, [theme]);
 
+  const handleOpenCalculate = () => {
+    if (isCalculateUnlocked) {
+      setCurrentView('next-calculate');
+    } else {
+      setIsPermissionModalOpen(true);
+    }
+  };
+
+  const handlePermissionSuccess = () => {
+    setIsCalculateUnlocked(true);
+    localStorage.setItem('net_calc_permission_unlocked', 'true');
+    setCurrentView('next-calculate');
+  };
+
   return (
     <div className="app-wrapper">
       {currentView === 'calculator' ? (
@@ -84,6 +105,7 @@ function App() {
           <Header
             theme={theme}
             onChangeTheme={setTheme}
+            onOpenCalculate={handleOpenCalculate}
             onOpenWatermark={() => setCurrentView('watermark')}
             onOpenTextEditor={() => setCurrentView('text-editor')}
           />
@@ -104,13 +126,23 @@ function App() {
         </>
       ) : currentView === 'watermark' ? (
         <WatermarkStudio onBack={() => setCurrentView('calculator')} />
-      ) : (
+      ) : currentView === 'text-editor' ? (
         <TextEditor onBack={() => setCurrentView('calculator')} />
+      ) : (
+        <NextCalculatePage onBack={() => setCurrentView('calculator')} />
       )}
 
-      <footer className="footer-text">
-        <span>Net_Calculate &copy; {new Date().getFullYear()} — Built for modern, high-speed business usage.</span>
-      </footer>
+      <PermissionModal
+        isOpen={isPermissionModalOpen}
+        onClose={() => setIsPermissionModalOpen(false)}
+        onSuccess={handlePermissionSuccess}
+      />
+
+      {currentView !== 'next-calculate' && (
+        <footer className="footer-text">
+          <span>Net_Calculate &copy; {new Date().getFullYear()} — Built for modern, high-speed business usage.</span>
+        </footer>
+      )}
     </div>
   );
 }

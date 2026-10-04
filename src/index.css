@@ -8,16 +8,17 @@
 :root {
   /* Minimalist Helvetica Light Theme */
   --bg-gradient: linear-gradient(180deg, #f7f7f9 0%, #ededf2 100%);
-  --modal-bg: rgba(255, 255, 255, 0.8);
+  --modal-overlay-bg: rgba(20, 20, 30, 0.25);
+  --modal-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 245, 248, 0.72) 100%);
   --card-border: rgba(34, 34, 34, 0.08);
-  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --card-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   
   --text-primary: #222222;
   --text-secondary: #666666;
   --text-muted: #888888;
   
-  --input-bg: rgba(255, 255, 255, 0.9);
-  --input-border: rgba(34, 34, 34, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --input-border: rgba(34, 34, 34, 0.1);
   --input-focus-border: #222222;
   --input-focus-shadow: 0 0 0 4px rgba(34, 34, 34, 0.04);
   
@@ -48,9 +49,10 @@
 .theme-dark {
   /* Minimalist Helvetica Dark Theme (#222222 and white) */
   --bg-gradient: linear-gradient(180deg, #121212 0%, #1a1a1a 100%);
-  --modal-bg: rgba(34, 34, 34, 0.85); /* #222222 glass overlay */
-  --card-border: rgba(255, 255, 255, 0.07);
-  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --modal-overlay-bg: rgba(0, 0, 0, 0.65);
+  --modal-bg: linear-gradient(145deg, rgba(32, 32, 32, 0.82) 0%, rgba(18, 18, 18, 0.9) 100%);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
@@ -87,9 +89,10 @@
 .theme-soft-blue {
   /* Minimalist Premium Soft Blue Theme */
   --bg-gradient: linear-gradient(180deg, #0e1e38 0%, #0a1424 100%);
-  --modal-bg: rgba(15, 30, 54, 0.85);
-  --card-border: rgba(99, 179, 237, 0.15);
-  --card-shadow: 0 30px 60px rgba(3, 8, 20, 0.5), inset 0 1px 0 rgba(99, 179, 237, 0.08);
+  --modal-overlay-bg: rgba(4, 10, 24, 0.6);
+  --modal-bg: linear-gradient(145deg, rgba(18, 36, 68, 0.82) 0%, rgba(10, 20, 42, 0.92) 100%);
+  --card-border: rgba(99, 179, 237, 0.18);
+  --card-shadow: 0 30px 60px rgba(3, 8, 20, 0.6), inset 0 1px 0 rgba(99, 179, 237, 0.12);
   
   --text-primary: #ebf8ff;
   --text-secondary: #90cdf4;
@@ -131,9 +134,10 @@
   --bg-size: 24px 24px, 24px 24px, 100% 100%;
   --bg-position: 0 0, 12px 12px, 0 0;
   
-  --modal-bg: rgba(22, 13, 44, 0.85);
-  --card-border: rgba(192, 132, 252, 0.15);
-  --card-shadow: 0 30px 60px rgba(5, 2, 15, 0.6), inset 0 1px 0 rgba(192, 132, 252, 0.08);
+  --modal-overlay-bg: rgba(8, 3, 20, 0.6);
+  --modal-bg: linear-gradient(145deg, rgba(32, 18, 62, 0.82) 0%, rgba(18, 10, 38, 0.92) 100%);
+  --card-border: rgba(192, 132, 252, 0.2);
+  --card-shadow: 0 30px 60px rgba(5, 2, 15, 0.6), inset 0 1px 0 rgba(192, 132, 252, 0.12);
   
   --text-primary: #f3e8ff;
   --text-secondary: #c084fc;
@@ -175,16 +179,17 @@
   --bg-size: 24px 24px, 24px 24px, 100% 100%;
   --bg-position: 0 0, 12px 12px, 0 0;
   
-  --modal-bg: rgba(255, 255, 255, 0.85);
+  --modal-overlay-bg: rgba(20, 20, 30, 0.25);
+  --modal-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(245, 245, 248, 0.72) 100%);
   --card-border: rgba(34, 34, 34, 0.08);
-  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --card-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   
   --text-primary: #222222;
   --text-secondary: #666666;
   --text-muted: #888888;
   
-  --input-bg: rgba(255, 255, 255, 0.9);
-  --input-border: rgba(34, 34, 34, 0.12);
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --input-border: rgba(34, 34, 34, 0.1);
   --input-focus-border: #222222;
   --input-focus-shadow: 0 0 0 4px rgba(34, 34, 34, 0.04);
   
@@ -216,9 +221,10 @@
   --bg-size: 24px 24px, 24px 24px, 100% 100%;
   --bg-position: 0 0, 12px 12px, 0 0;
   
-  --modal-bg: rgba(34, 34, 34, 0.85);
-  --card-border: rgba(255, 255, 255, 0.07);
-  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --modal-overlay-bg: rgba(0, 0, 0, 0.65);
+  --modal-bg: linear-gradient(145deg, rgba(32, 32, 32, 0.82) 0%, rgba(18, 18, 18, 0.9) 100%);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   
   --text-primary: #ffffff;
   --text-secondary: #a0a0a0;
@@ -259,9 +265,10 @@
   --bg-size: 24px 24px, 24px 24px, 100% 100%;
   --bg-position: 0 0, 12px 12px, 0 0;
   
-  --modal-bg: rgba(60, 5, 23, 0.85);
-  --card-border: rgba(244, 63, 94, 0.15);
-  --card-shadow: 0 30px 60px rgba(15, 2, 6, 0.6), inset 0 1px 0 rgba(244, 63, 94, 0.08);
+  --modal-overlay-bg: rgba(28, 0, 7, 0.6);
+  --modal-bg: linear-gradient(145deg, rgba(76, 5, 25, 0.8) 0%, rgba(35, 1, 11, 0.9) 100%);
+  --card-border: rgba(244, 63, 94, 0.22);
+  --card-shadow: 0 30px 60px rgba(15, 2, 6, 0.6), inset 0 1px 0 rgba(244, 63, 94, 0.15);
   
   --text-primary: #ffe4e6;
   --text-secondary: #f43f5e;
@@ -301,26 +308,28 @@
   --bg-size: 24px 24px, 24px 24px, 100% 100%;
   --bg-position: 0 0, 12px 12px, 0 0;
   
-  --modal-bg: rgba(255, 255, 255, 0.6);
-  --card-border: rgba(219, 39, 119, 0.12);
-  --card-shadow: 0 30px 60px rgba(219, 39, 119, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* Delicate warm rose overlay that preserves the pink background rather than turning murky grey */
+  --modal-overlay-bg: rgba(219, 39, 119, 0.08);
+  --modal-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 228, 238, 0.6) 100%);
+  --card-border: rgba(219, 39, 119, 0.16);
+  --card-shadow: 0 25px 60px -10px rgba(219, 39, 119, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   
   --text-primary: #831843;
   --text-secondary: #db2777;
   --text-muted: #f472b6;
   
-  --input-bg: rgba(255, 255, 255, 0.7);
-  --input-border: rgba(219, 39, 119, 0.15);
+  --input-bg: rgba(255, 255, 255, 0.65);
+  --input-border: rgba(219, 39, 119, 0.18);
   --input-focus-border: #db2777;
-  --input-focus-shadow: 0 0 0 4px rgba(219, 39, 119, 0.08);
+  --input-focus-shadow: 0 0 0 4px rgba(219, 39, 119, 0.12);
   
   --accent-color: #db2777;
   
   /* Liquid Glass Button Soft Pink */
-  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%);
-  --btn-glass-border: rgba(219, 39, 119, 0.12);
+  --btn-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 228, 238, 0.6) 100%);
+  --btn-glass-border: rgba(219, 39, 119, 0.16);
   --btn-glass-text: #831843;
-  --btn-glass-shadow: 0 4px 16px rgba(219, 39, 119, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --btn-glass-shadow: 0 4px 16px rgba(219, 39, 119, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   
   --btn-primary-bg: #db2777;
   --btn-primary-text: #ffffff;
@@ -815,13 +824,14 @@ body {
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 10, 10, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-sizing: border-box;
+  background: var(--modal-overlay-bg, rgba(10, 10, 10, 0.45));
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 99999;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -839,13 +849,13 @@ body {
   background: var(--modal-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--card-shadow);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-radius: 16px;
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border-radius: 20px;
   position: relative;
   transform: scale(0.96) translateY(10px);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: visible;
+  overflow: hidden;
 }
 
 .modal-overlay.active .modal-content {
@@ -858,6 +868,7 @@ body {
   align-items: center;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--card-border);
+  background: transparent;
 }
 
 .modal-title {
@@ -1615,7 +1626,7 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* Processed Preview Section (Pop-in or Tab style) */
@@ -2244,4 +2255,1060 @@ body {
   }
 }
 
+/* ==========================================================================
+   Permission Confirmation Modal & Next Calculate Page Styles
+   ========================================================================== */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
 
+.modal-footer .btn {
+  border-radius: 10px;
+}
+
+.modal-content .form-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: 1px solid var(--btn-primary-bg);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Full-width and height behavior for Next Calculate Page */
+#root:has(.next-calculate-page) {
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.app-wrapper:has(.next-calculate-page) {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.next-calculate-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  flex: 1;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sticky Header with Backdrop Blur */
+.next-calculate-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--modal-bg);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border-bottom: 1.5px solid var(--card-border);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.03);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.next-calculate-header-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-sizing: border-box;
+}
+
+.next-calculate-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.next-calculate-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.next-calculate-header-date {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: none;
+}
+
+@media (min-width: 520px) {
+  .next-calculate-header-date {
+    display: inline-block;
+  }
+}
+
+.next-calculate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--formula-badge-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.next-calculate-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Main Container with Generous Container Padding */
+.next-calculate-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 3.5rem 1.25rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Group Cards List */
+.calc-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* Individual THB Group Card */
+.calc-group-card {
+  width: 100%;
+  background: var(--modal-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.calc-group-card:hover {
+  border-color: rgba(219, 39, 119, 0.25);
+}
+
+[data-theme="dark"] .calc-group-card:hover,
+.theme-dark .calc-group-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Group Card Header */
+.calc-group-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  border-bottom: 1px solid var(--card-border);
+  gap: 0.75rem;
+}
+
+.calc-group-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.calc-group-date-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color 0.15s ease;
+}
+
+.calc-group-date-wrap:hover {
+  color: var(--text-primary);
+}
+
+.calc-date-icon {
+  color: var(--brand-pink, #db2777);
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.calc-date-text {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.calc-date-input-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.calc-group-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .calc-group-tag,
+.theme-dark .calc-group-tag {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.calc-group-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* Pure text subtotal with no background */
+.calc-group-subtotal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.calc-subtotal-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.calc-subtotal-val {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Table Wrap inside Card */
+.calc-table-wrap {
+  width: 100%;
+  padding: 0.5rem 0.85rem;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.calc-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  height: auto; /* Strictly prevent vertical stretching */
+}
+
+/* Table Headers */
+.calc-th-row th {
+  padding: 0.4rem 0.35rem 0.5rem 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  border-bottom: 1px solid var(--card-border);
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.calc-col-thb {
+  width: 27%;
+  text-align: center !important;
+}
+
+.calc-col-name {
+  width: 33%;
+}
+
+.calc-col-kyats {
+  width: 30%;
+  text-align: right !important;
+}
+
+.calc-col-action {
+  width: 10%;
+  min-width: 44px;
+  text-align: center !important;
+}
+
+/* Data Rows - Tight & Compact Gap without stretching */
+.calc-data-row {
+  height: auto;
+}
+
+.calc-data-row td {
+  padding: 0.28rem 0.3rem; /* Compact 4.5px padding for tight spacing */
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+/* High-Legibility, Compact Touch-Friendly Inputs */
+.calc-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 0.65rem;
+  font-family: inherit;
+  font-size: 16px !important; /* Prevents iOS Safari auto-zoom */
+  font-weight: 500;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1.5px solid var(--card-border);
+  color: #0f172a;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .calc-input,
+.theme-dark .calc-input,
+.theme-midnight-blue .calc-input,
+.theme-polka-dark .calc-input {
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.theme-soft-pink .calc-input {
+  background: rgba(255, 255, 255, 0.95);
+  color: #831843;
+  border-color: rgba(219, 39, 119, 0.2);
+}
+
+.calc-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.14);
+  background: #ffffff;
+}
+
+[data-theme="dark"] .calc-input:focus,
+.theme-dark .calc-input:focus {
+  background: rgba(30, 41, 59, 0.95);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.calc-thb-input {
+  font-weight: 700;
+  text-align: center;
+  color: var(--accent-color);
+}
+
+.calc-name-input {
+  font-weight: 500;
+  text-align: left;
+}
+
+.calc-kyats-input {
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-thb-connect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  opacity: 0.55;
+  height: 40px;
+  user-select: none;
+}
+
+/* ========================================================
+   Trash Button - Distinct Background & Great For Clicking!
+   ======================================================== */
+.calc-del-btn {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  background: rgba(239, 68, 68, 0.09);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.08);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+[data-theme="dark"] .calc-del-btn,
+.theme-dark .calc-del-btn {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.calc-del-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #dc2626;
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+.calc-del-btn:active {
+  transform: scale(0.93);
+  background: rgba(239, 68, 68, 0.28);
+  box-shadow: 0 1px 2px rgba(239, 68, 68, 0.15);
+}
+
+.calc-del-group-header-btn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+}
+
+/* Group Card Footer: Add Row Button */
+.calc-group-card-footer {
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  background: rgba(0, 0, 0, 0.015);
+  border-top: 1px solid var(--card-border);
+}
+
+.calc-add-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--formula-badge-bg);
+  border: 1px solid var(--accent-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  height: 36px;
+  min-width: 100px;
+  padding: 0 0.95rem;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calc-add-row-btn:hover {
+  background: var(--btn-glass-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+.calc-add-row-btn:active {
+  transform: scale(0.97);
+}
+
+/* Add Another THB Group Button */
+.calc-add-group-btn {
+  width: 100%;
+  height: 48px;
+  background: var(--formula-badge-bg);
+  border: 1.5px dashed var(--accent-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.calc-add-group-btn:hover {
+  background: var(--btn-glass-bg);
+  border-style: solid;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.calc-add-group-btn:active {
+  transform: scale(0.98);
+}
+
+/* Export Container for Image Capture & Print */
+.calc-export-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-sizing: border-box;
+}
+
+/* Print/Export Header (shown when exporting or printing) */
+.calc-print-header {
+  display: none;
+  padding: 0.5rem 0.25rem 0.75rem 0.25rem;
+  border-bottom: 2px solid var(--card-border);
+  margin-bottom: 0.5rem;
+}
+
+.calc-print-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.calc-print-subtitle {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Grand Total Summary Card (Simplified 2-Column: THB & Grand Total) */
+.calc-summary-card {
+  width: 100%;
+  background: var(--modal-bg);
+  border: 1.5px solid var(--card-border);
+  border-radius: 18px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  padding: 1.15rem 1.4rem;
+  box-sizing: border-box;
+}
+
+.calc-summary-grid-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.calc-summary-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calc-summary-col-grand {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.calc-summary-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calc-summary-icon {
+  opacity: 0.85;
+  color: var(--accent-color);
+}
+
+.calc-summary-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.calc-summary-grand-accent {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  letter-spacing: -0.01em;
+}
+
+/* ========================================================
+   Delete Confirmation Modal
+   ======================================================== */
+.calc-confirm-modal {
+  max-width: 400px;
+  width: 90%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+}
+
+.calc-confirm-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-confirm-message {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.calc-confirm-delete-btn {
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #dc2626;
+  border-radius: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.calc-confirm-delete-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+.calc-confirm-delete-btn:active {
+  transform: scale(0.96);
+}
+
+/* ========================================================
+   Clean Permission Modal with Screenshot Action
+   ======================================================== */
+.calc-clean-modal {
+  max-width: 440px;
+  width: 92%;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+}
+
+.calc-clean-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-clean-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.calc-clean-screenshot-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: var(--formula-badge-bg);
+  border: 1px solid var(--card-border);
+}
+
+.calc-clean-screenshot-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.calc-clean-screenshot-text strong {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+}
+
+.calc-clean-screenshot-text span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.calc-modal-shot-btn {
+  height: 36px;
+  padding: 0 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  gap: 6px;
+}
+
+/* ========================================================
+   Screenshot Export Template (Off-screen, captured by html2canvas)
+   - Only ONE single table
+   - Continuous rows without card breaks
+   - Grand Total in Table Footer
+   ======================================================== */
+.calc-screenshot-export-sheet {
+  position: fixed;
+  top: 0;
+  left: -99999px;
+  width: 520px;
+  z-index: -99999;
+  pointer-events: none;
+  opacity: 1;
+  padding: 24px;
+  box-sizing: border-box;
+  background: var(--bg-gradient, #ffffff);
+}
+
+.calc-shot-card {
+  width: 100%;
+  background: var(--modal-bg, #ffffff);
+  border: 1.5px solid var(--card-border);
+  border-radius: 18px;
+  padding: 1.5rem 1.5rem 1.25rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.calc-shot-header {
+  padding-bottom: 0.85rem;
+  border-bottom: 1.5px solid var(--card-border);
+  margin-bottom: 0.85rem;
+}
+
+.calc-shot-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 3px 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.calc-shot-subtitle {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* One Single Continuous Table */
+.calc-shot-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calc-shot-th-row th {
+  padding: 0.65rem 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--card-border);
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.calc-shot-col-thb {
+  width: 28%;
+  text-align: center !important;
+}
+
+.calc-shot-col-name {
+  width: 38%;
+  text-align: left !important;
+}
+
+.calc-shot-col-kyats {
+  width: 34%;
+  text-align: right !important;
+}
+
+/* Rows flowing under each other without break */
+.calc-shot-row td {
+  padding: 0.55rem 0.5rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--card-border);
+  font-size: 0.95rem;
+}
+
+.calc-shot-td-thb {
+  text-align: center;
+}
+
+.calc-shot-thb-val {
+  font-weight: 700;
+  color: var(--accent-color);
+  font-size: 1rem;
+}
+
+.calc-shot-connect {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  opacity: 0.55;
+}
+
+.calc-shot-td-name {
+  text-align: left;
+}
+
+.calc-shot-name-val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.calc-shot-td-kyats {
+  text-align: right;
+}
+
+.calc-shot-kyats-val {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.02rem;
+}
+
+/* Subtotal row inside the same table */
+.calc-shot-subtotal-row td {
+  padding: 0.4rem 0.5rem 0.5rem 0.5rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1.5px solid var(--card-border);
+}
+
+.calc-shot-subtotal-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.calc-shot-subtotal-val {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Table Footer with Grand Total */
+.calc-shot-tfoot {
+  border-top: 2px solid var(--card-border);
+}
+
+.calc-shot-foot-row td {
+  padding: 0.75rem 0.5rem 0.45rem 0.5rem;
+  vertical-align: top;
+}
+
+.calc-shot-foot-thb {
+  text-align: center;
+}
+
+.calc-shot-foot-kyats {
+  text-align: right;
+}
+
+.calc-shot-foot-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
+
+.calc-shot-foot-val {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.calc-shot-foot-grand {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================================
+   Print Stylesheet
+   ======================================================== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .calc-export-container,
+  .calc-export-container * {
+    visibility: visible;
+  }
+  .calc-export-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .calc-print-header {
+    display: block !important;
+  }
+  [data-html2canvas-ignore="true"] {
+    display: none !important;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .next-calculate-header-inner {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .next-calculate-container {
+    padding: 0.85rem 0.75rem 2.5rem 0.75rem;
+    gap: 1rem;
+  }
+
+  .calc-group-card-header {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .calc-table-wrap {
+    padding: 0.4rem 0.5rem;
+  }
+
+  .calc-th-row th {
+    padding: 0.35rem 0.25rem 0.45rem 0.25rem;
+    font-size: 0.78rem;
+  }
+
+  .calc-data-row td {
+    padding: 0.22rem 0.2rem;
+  }
+
+  .calc-input {
+    height: 38px;
+    padding: 0 0.5rem;
+  }
+
+  .calc-thb-connect {
+    height: 38px;
+    font-size: 1.05rem;
+  }
+
+  .calc-del-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .calc-summary-card {
+    padding: 1rem 1.15rem;
+  }
+
+  .calc-summary-val {
+    font-size: 0.95rem;
+  }
+
+  .calc-summary-grand-accent {
+    font-size: 1.02rem;
+  }
+}
