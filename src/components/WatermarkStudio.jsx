@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Select from 'react-select';
-import { ArrowLeft, Upload, Download, Type, Image as ImageIcon, Move, Sparkles, Trash2, Grid, RotateCw } from 'lucide-react';
+import { ArrowLeft, Upload, Download, Type, Image as ImageIcon, Move, Sparkles, Trash2, Grid, RotateCw, Pencil } from 'lucide-react';
+import ImageCardEditor from './ImageCardEditor';
+import { drawCardsOnCanvas } from '../utils/cardRenderer';
 
 const PRESET_COLORS = [
   '#ffffff', // White
@@ -290,10 +292,15 @@ const WatermarkStudio = ({ onBack }) => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [rawPreviewUrls, setRawPreviewUrls] = useState([]);
   const [watermarkedUrls, setWatermarkedUrls] = useState([]);
+  const [originalCleanFiles, setOriginalCleanFiles] = useState([]);
+  const [originalCleanUrls, setOriginalCleanUrls] = useState([]);
+  const [cardsPerImage, setCardsPerImage] = useState({});
+  const [cardBaseUrls, setCardBaseUrls] = useState({});
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [editingImageIndex, setEditingImageIndex] = useState(null);
 
   const containerRef = useRef(null);
   const previewWrapperRef = useRef(null);
@@ -383,14 +390,22 @@ const WatermarkStudio = ({ onBack }) => {
     localStorage.setItem('net_calc_wm_stagger', patternStagger.toString());
   }, [patternStagger]);
 
-  // Clean up object URLs on unmount
+  // Keep track of active raw preview URLs for clean unmount
+  const rawPreviewUrlsRef = useRef(rawPreviewUrls);
+  useEffect(() => {
+    rawPreviewUrlsRef.current = rawPreviewUrls;
+  }, [rawPreviewUrls]);
+
+  // Clean up object URLs only when WatermarkStudio component truly unmounts
   useEffect(() => {
     return () => {
-      rawPreviewUrls.forEach(url => {
-        URL.revokeObjectURL(url);
-      });
+      if (rawPreviewUrlsRef.current) {
+        rawPreviewUrlsRef.current.forEach(url => {
+          try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+        });
+      }
     };
-  }, [rawPreviewUrls]);
+  }, []);
 
   // Resizing and storing logo
   const handleLogoUpload = (e) => {
@@ -507,43 +522,88 @@ const WatermarkStudio = ({ onBack }) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    const urls = files.map(file => URL.createObjectURL(file));
     setUploadedFiles(prev => [...prev, ...files]);
-    setRawPreviewUrls(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
+    setRawPreviewUrls(prev => [...prev, ...urls]);
+    setOriginalCleanFiles(prev => [...prev, ...files]);
+    setOriginalCleanUrls(prev => [...prev, ...urls]);
     setWatermarkedUrls(prev => [...prev, ...files.map(() => null)]);
   };
 
   const clearAllFiles = () => {
-    rawPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    rawPreviewUrls.forEach(url => {
+      try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+    });
+    originalCleanUrls.forEach(url => {
+      try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+    });
     setUploadedFiles([]);
     setRawPreviewUrls([]);
+    setOriginalCleanFiles([]);
+    setOriginalCleanUrls([]);
     setWatermarkedUrls([]);
+    setCardsPerImage({});
+    setCardBaseUrls({});
     setActivePreviewIndex(0);
   };
 
   const removeUploadedFile = (index) => {
     if (rawPreviewUrls[index]) {
-      URL.revokeObjectURL(rawPreviewUrls[index]);
+      try { URL.revokeObjectURL(rawPreviewUrls[index]); } catch { /* ignore */ }
+    }
+    if (originalCleanUrls[index]) {
+      try { URL.revokeObjectURL(originalCleanUrls[index]); } catch { /* ignore */ }
     }
 
-    setUploadedFiles(prev => {
-      const updated = [...prev];
-      updated.splice(index, 1);
-      return updated;
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setRawPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setOriginalCleanFiles(prev => prev.filter((_, i) => i !== index));
+    setOriginalCleanUrls(prev => prev.filter((_, i) => i !== index));
+    setWatermarkedUrls(prev => prev.filter((_, i) => i !== index));
+    setCardsPerImage(prev => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
     });
-    setRawPreviewUrls(prev => {
-      const updated = [...prev];
-      updated.splice(index, 1);
-      return updated;
-    });
-    setWatermarkedUrls(prev => {
-      const updated = [...prev];
-      updated.splice(index, 1);
-      return updated;
+    setCardBaseUrls(prev => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
     });
 
     if (activePreviewIndex >= uploadedFiles.length - 1) {
       setActivePreviewIndex(Math.max(0, uploadedFiles.length - 2));
     }
+  };
+
+  const handleSaveEditedImage = ({ index, file, previewUrl, cards, baseImageUrl }) => {
+    // 1. Persist the cards data for this image so it can be re-edited anytime
+    if (cards) {
+      setCardsPerImage(prev => ({ ...prev, [index]: cards }));
+    }
+    // 2. Persist the clean base image that cards were drawn on top of
+    if (baseImageUrl) {
+      setCardBaseUrls(prev => {
+        if (!prev[index]) {
+          return { ...prev, [index]: baseImageUrl };
+        }
+        return prev;
+      });
+    }
+
+    // 3. Update uploadedFiles so downloading or sharing gets the image with cards
+    setUploadedFiles(prev => {
+      const updated = [...prev];
+      updated[index] = file;
+      return updated;
+    });
+
+    // 4. Update the display preview in Watermark Studio with cards
+    setWatermarkedUrls(prev => {
+      const updated = [...prev];
+      updated[index] = previewUrl;
+      return updated;
+    });
   };
 
   // Canvas processing engine
@@ -570,8 +630,25 @@ const WatermarkStudio = ({ onBack }) => {
 
       for (let idx = 0; idx < uploadedFiles.length; idx++) {
         const file = uploadedFiles[idx];
-        const previewUrl = rawPreviewUrls[idx];
-        const img = await loadImage(previewUrl);
+        let img = null;
+        const candidates = [
+          rawPreviewUrls[idx],
+          originalCleanUrls[idx],
+          file ? URL.createObjectURL(file) : null
+        ].filter(Boolean);
+
+        for (const candidate of candidates) {
+          try {
+            img = await loadImage(candidate);
+            if (img && img.naturalWidth > 0) break;
+          } catch {
+            // try next candidate
+          }
+        }
+
+        if (!img) {
+          throw new Error(`Failed to load image at index ${idx}`);
+        }
 
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth;
@@ -680,6 +757,16 @@ const WatermarkStudio = ({ onBack }) => {
           }
         }
         ctx.restore();
+
+        // 1. If this image has saved cards, preserve clean watermarked base image for future card editing
+        const imageCards = cardsPerImage[idx];
+        if (imageCards && Array.isArray(imageCards) && imageCards.length > 0) {
+          const baseWmUrl = canvas.toDataURL(file.type || 'image/png');
+          setCardBaseUrls(prev => ({ ...prev, [idx]: baseWmUrl }));
+
+          // 2. Draw the cards on top of the watermark so the card stays on the photo and in the lightbox!
+          drawCardsOnCanvas(ctx, img, canvas.width, canvas.height, imageCards, 400);
+        }
 
         const watermarkedUrl = canvas.toDataURL(file.type || 'image/png');
         results.push(watermarkedUrl);
@@ -1465,6 +1552,18 @@ const WatermarkStudio = ({ onBack }) => {
                   </button>
                 )}
 
+                {/* Edit & Add Glass Card Button */}
+                <button
+                  className="wm-large-preview-edit"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingImageIndex(idx);
+                  }}
+                  title="Edit Image & Add Glass Card"
+                >
+                  <Pencil size={14} />
+                </button>
+
                 {/* Remove Button */}
                 <button
                   className="wm-large-preview-remove"
@@ -1476,6 +1575,11 @@ const WatermarkStudio = ({ onBack }) => {
                 >
                   <Trash2 size={15} />
                 </button>
+
+                {/* Hover Pill for easy editing */}
+                <div className="wm-card-edit-pill">
+                  <Pencil size={11} /> Edit Card
+                </div>
               </div>
             ))}
           </div>
@@ -1695,6 +1799,39 @@ const WatermarkStudio = ({ onBack }) => {
           onClick={() => setLightboxIndex(null)}
         >
           <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const targetIdx = lightboxIndex;
+              setLightboxIndex(null);
+              setEditingImageIndex(targetIdx);
+            }}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '72px',
+              background: 'rgba(37, 99, 235, 0.85)',
+              border: '1px solid rgba(147, 197, 253, 0.4)',
+              color: '#fff',
+              borderRadius: '20px',
+              padding: '0 16px',
+              height: '40px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '7px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              transition: 'background 0.2s',
+              zIndex: 100000
+            }}
+            title="Edit Photo & Add Glass Card"
+          >
+            <Pencil size={15} /> Edit Card
+          </button>
+          <button
             onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
             style={{
               position: 'absolute',
@@ -1750,6 +1887,28 @@ const WatermarkStudio = ({ onBack }) => {
           )}
         </div>,
         document.body
+      )}
+
+      {/* Clean Fullscreen Image Glass Card Editor */}
+      {editingImageIndex !== null && (
+        <ImageCardEditor
+          key={`card-editor-${editingImageIndex}`}
+          imageUrl={
+            cardBaseUrls[editingImageIndex] ||
+            watermarkedUrls[editingImageIndex] ||
+            rawPreviewUrls[editingImageIndex] ||
+            originalCleanUrls[editingImageIndex] ||
+            (uploadedFiles[editingImageIndex] ? URL.createObjectURL(uploadedFiles[editingImageIndex]) : null)
+          }
+          imageFile={
+            uploadedFiles[editingImageIndex] ||
+            originalCleanFiles[editingImageIndex]
+          }
+          imageIndex={editingImageIndex}
+          initialCards={cardsPerImage[editingImageIndex] || null}
+          onSave={handleSaveEditedImage}
+          onClose={() => setEditingImageIndex(null)}
+        />
       )}
     </div>
   );
