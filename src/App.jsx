@@ -138,7 +138,7 @@ function App() {
         onSuccess={handlePermissionSuccess}
       />
 
-      {currentView !== 'next-calculate' && (
+      {currentView === 'calculator' && (
         <footer className="footer-text">
           <span>Net_Calculate &copy; {new Date().getFullYear()} — Built for modern, high-speed business usage.</span>
         </footer>

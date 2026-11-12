@@ -880,6 +880,42 @@ const WatermarkStudio = ({ onBack }) => {
   };
 
 
+  if (editingImageIndex !== null) {
+    return (
+      <ImageCardEditor
+        key={`card-editor-${editingImageIndex}`}
+        imageUrl={
+          cardBaseUrls[editingImageIndex] ||
+          watermarkedUrls[editingImageIndex] ||
+          rawPreviewUrls[editingImageIndex] ||
+          originalCleanUrls[editingImageIndex] ||
+          (uploadedFiles[editingImageIndex] ? URL.createObjectURL(uploadedFiles[editingImageIndex]) : null)
+        }
+        imageFile={
+          uploadedFiles[editingImageIndex] ||
+          originalCleanFiles[editingImageIndex]
+        }
+        imageIndex={editingImageIndex}
+        allImages={uploadedFiles.map((file, idx) => ({
+          index: idx,
+          url:
+            cardBaseUrls[idx] ||
+            watermarkedUrls[idx] ||
+            rawPreviewUrls[idx] ||
+            originalCleanUrls[idx] ||
+            (file ? URL.createObjectURL(file) : null),
+          name: file?.name || `Photo #${idx + 1}`,
+          cardCount: (cardsPerImage[idx] || []).length
+        }))}
+        onSelectImageIndex={(newIdx) => setEditingImageIndex(newIdx)}
+        onUploadMoreImages={handleImageUpload}
+        initialCards={cardsPerImage[editingImageIndex] || null}
+        onSave={handleSaveEditedImage}
+        onClose={() => setEditingImageIndex(null)}
+      />
+    );
+  }
+
   if (isAdjusting) {
     return (
       <div className="watermark-studio-page animate-fade-in">
@@ -1887,28 +1923,6 @@ const WatermarkStudio = ({ onBack }) => {
           )}
         </div>,
         document.body
-      )}
-
-      {/* Clean Fullscreen Image Glass Card Editor */}
-      {editingImageIndex !== null && (
-        <ImageCardEditor
-          key={`card-editor-${editingImageIndex}`}
-          imageUrl={
-            cardBaseUrls[editingImageIndex] ||
-            watermarkedUrls[editingImageIndex] ||
-            rawPreviewUrls[editingImageIndex] ||
-            originalCleanUrls[editingImageIndex] ||
-            (uploadedFiles[editingImageIndex] ? URL.createObjectURL(uploadedFiles[editingImageIndex]) : null)
-          }
-          imageFile={
-            uploadedFiles[editingImageIndex] ||
-            originalCleanFiles[editingImageIndex]
-          }
-          imageIndex={editingImageIndex}
-          initialCards={cardsPerImage[editingImageIndex] || null}
-          onSave={handleSaveEditedImage}
-          onClose={() => setEditingImageIndex(null)}
-        />
       )}
     </div>
   );

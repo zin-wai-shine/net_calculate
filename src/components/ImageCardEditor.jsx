@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { drawCardsOnCanvas, parseCardPrice, formatNumberWithCommas } from '../utils/cardRenderer';
+import { drawCardsOnCanvas, parseCardPrice, formatNumberWithCommas, hexToRgba, isColorDark } from '../utils/cardRenderer';
 import {
   ArrowLeft,
   Sparkles,
@@ -17,16 +17,75 @@ import {
   SquarePlus,
   Eye,
   Download,
-  X
+  X,
+  Droplets,
+  Layers,
+  Aperture,
+  Pipette
 } from 'lucide-react';
 
 const GLASS_STYLES = [
-  { id: 'frosted', name: 'Frosted Glass', icon: '❄️' },
-  { id: 'liquid', name: 'Liquid Glass', icon: '💧' },
-  { id: 'translucent', name: 'Translucent', icon: '✨' },
-  { id: 'blur', name: 'Blur Card', icon: '🌫️' },
-  { id: 'privacy', name: 'Privacy Glass', icon: '🔒' }
+  { id: 'frosted', name: 'Frosted Glass', icon: Layers, defaultOpacity: 25, defaultBlur: 10, defaultTint: '#ffffff' },
+  { id: 'liquid', name: 'Liquid Glass', icon: Droplets, defaultOpacity: 35, defaultBlur: 14, defaultTint: '#ffffff' },
+  { id: 'translucent', name: 'Translucent', icon: Sparkles, defaultOpacity: 15, defaultBlur: 8, defaultTint: '#ffffff' },
+  { id: 'blur', name: 'Blur Card', icon: Aperture, defaultOpacity: 68, defaultBlur: 16, defaultTint: '#1e2430' }
 ];
+
+const GLASS_TINT_PRESETS = [
+  { id: 'white', label: 'White', color: '#ffffff' },
+  { id: 'smoke', label: 'Smoke', color: '#1e2430' },
+  { id: 'black', label: 'Black', color: '#090d16' },
+  { id: 'rose', label: 'Rose', color: '#f43f5e' },
+  { id: 'amber', label: 'Amber', color: '#f59e0b' },
+  { id: 'emerald', label: 'Emerald', color: '#10b981' },
+  { id: 'ocean', label: 'Ocean', color: '#3b82f6' },
+  { id: 'purple', label: 'Purple', color: '#8b5cf6' }
+];
+
+const TEXT_COLOR_PRESETS = [
+  { id: 'white', label: 'White', color: '#ffffff' },
+  { id: 'dark', label: 'Dark', color: '#0f172a' },
+  { id: 'rose', label: 'Rose', color: '#f43f5e' },
+  { id: 'gold', label: 'Gold', color: '#f59e0b' },
+  { id: 'emerald', label: 'Emerald', color: '#10b981' },
+  { id: 'ocean', label: 'Ocean', color: '#3b82f6' },
+  { id: 'purple', label: 'Purple', color: '#8b5cf6' },
+  { id: 'silver', label: 'Silver', color: '#94a3b8' }
+];
+
+function getCardGlassStyleObj(card) {
+  if (!card) return {};
+  const gStyle = card.glassStyle || 'blur';
+  const defaults = {
+    frosted: { opacity: 25, blur: 10, tint: '#ffffff' },
+    liquid: { opacity: 35, blur: 14, tint: '#ffffff' },
+    translucent: { opacity: 15, blur: 8, tint: '#ffffff' },
+    blur: { opacity: 68, blur: 16, tint: '#1e2430' }
+  }[gStyle] || { opacity: 40, blur: 12, tint: '#ffffff' };
+
+  const blurPx = card.glassBlur !== undefined ? card.glassBlur : defaults.blur;
+  const opacityVal = card.glassOpacity !== undefined ? card.glassOpacity : defaults.opacity;
+  const tintColor = card.glassTint || defaults.tint;
+  const alpha = Math.max(0.02, Math.min(1, opacityVal / 100));
+
+  let bg;
+  if (gStyle === 'liquid') {
+    bg = `linear-gradient(135deg, ${hexToRgba(tintColor, Math.min(1, alpha * 1.25))} 0%, ${hexToRgba(tintColor, alpha * 0.5)} 50%, ${hexToRgba(tintColor, Math.min(1, alpha * 0.95))} 100%)`;
+  } else if (gStyle === 'blur') {
+    bg = `linear-gradient(135deg, ${hexToRgba(tintColor, alpha * 0.9)} 0%, ${hexToRgba(tintColor, Math.min(1, alpha * 1.1))} 100%)`;
+  } else if (gStyle === 'translucent') {
+    bg = `linear-gradient(125deg, ${hexToRgba(tintColor, Math.min(1, alpha * 1.15))} 0%, ${hexToRgba(tintColor, alpha * 0.45)} 100%)`;
+  } else {
+    // frosted
+    bg = hexToRgba(tintColor, alpha);
+  }
+
+  return {
+    background: bg,
+    backdropFilter: `blur(${blurPx}px)`,
+    WebkitBackdropFilter: `blur(${blurPx}px)`
+  };
+}
 
 const FONTS = [
   { value: 'Montserrat', label: 'Montserrat' },
@@ -72,92 +131,6 @@ const SIZE_CATEGORIES = [
   }
 ];
 
-// Reusable Built-In Templates
-const DEFAULT_TEMPLATES = [
-  {
-    id: 'fashion-tag',
-    name: 'Fashion / Product Tag',
-    description: 'Top, 76,000 MMK, S/M/L/XL with target pointer',
-    titleText: 'Top',
-    priceText: '76,000 MMK',
-    priceAmount: '76,000',
-    priceCurrency: 'MMK',
-    isPrefixCurrency: false,
-    hasDivider: false,
-    hasSizes: true,
-    sizesList: ['S', 'M', 'L', 'XL'],
-    hasTag: false,
-    tagText: '',
-    hasTargetLine: true,
-    targetAnchor: 'auto',
-    lineStyle: 'straight',
-    anchorStyle: 'circle',
-    glassStyle: 'blur',
-    textColorMode: 'light',
-    cardWidth: 28,
-    cardHeight: 15,
-    themeColor: '#ffffff',
-    scale: 0.6
-  },
-  {
-    id: 'studio-luxury',
-    name: 'Real Estate / Studio',
-    description: 'Modern Studio, price, Studio/1 Bath/WiFi',
-    titleText: 'Modern Luxury Studio',
-    priceText: '$1,250 / mo',
-    hasDivider: true,
-    hasSizes: true,
-    sizesList: ['Studio', '1 Bath', 'WiFi'],
-    hasTag: true,
-    tagText: 'FEATURED',
-    hasTargetLine: false,
-    targetAnchor: 'auto',
-    glassStyle: 'frosted',
-    textColorMode: 'dark',
-    cardWidth: 65,
-    cardHeight: 26,
-    themeColor: '#0f172a'
-  },
-  {
-    id: 'minimal-callout',
-    name: 'Minimal Callout Tag',
-    description: 'New Arrival with pointer line',
-    titleText: 'New Arrival',
-    priceText: '$49.99',
-    hasDivider: false,
-    hasSizes: false,
-    sizesList: [],
-    hasTag: false,
-    tagText: '',
-    hasTargetLine: true,
-    targetAnchor: 'left',
-    glassStyle: 'translucent',
-    textColorMode: 'light',
-    cardWidth: 46,
-    cardHeight: 20,
-    themeColor: '#ffffff'
-  },
-  {
-    id: 'menu-food',
-    name: 'Food / Menu Item',
-    description: 'Signature Dish, price, badges',
-    titleText: 'Truffle Pasta',
-    priceText: '$18.50',
-    hasDivider: true,
-    hasSizes: true,
-    sizesList: ['Chef Pick', 'Best Seller'],
-    hasTag: true,
-    tagText: 'SPECIAL',
-    hasTargetLine: true,
-    targetAnchor: 'bottom',
-    glassStyle: 'liquid',
-    textColorMode: 'dark',
-    cardWidth: 58,
-    cardHeight: 27,
-    themeColor: '#0f172a'
-  }
-];
-
 const CARD_THEME_COLORS = [
   { id: 'white', label: 'White', color: '#ffffff' },
   { id: 'dark', label: 'Dark', color: '#0f172a' },
@@ -171,6 +144,24 @@ const CARD_THEME_COLORS = [
 const getCardThemeColor = (card) => {
   if (card?.themeColor) return card.themeColor;
   return card?.textColorMode === 'dark' ? '#0f172a' : '#ffffff';
+};
+
+const getCardGlassStroke = (card) => {
+  if (card?.hasBorder === false) return 'transparent';
+  const color = card?.themeColor || (card?.textColorMode === 'dark' ? '#0f172a' : '#ffffff');
+  if (!color || color.toLowerCase() === '#ffffff' || color === 'white') {
+    return 'rgba(255, 255, 255, 0.48)';
+  }
+  if (color === '#0f172a' || card?.textColorMode === 'dark') {
+    return 'rgba(15, 23, 42, 0.55)';
+  }
+  let c = color.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  if (c.length === 6) {
+    const num = parseInt(c, 16);
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, 0.65)`;
+  }
+  return color;
 };
 
 // Helper clamp function
@@ -343,6 +334,9 @@ export default function ImageCardEditor({
   imageUrl,
   imageFile,
   imageIndex,
+  allImages = [],
+  onSelectImageIndex,
+  onUploadMoreImages,
   initialCards = null,
   onSave,
   onClose
@@ -432,14 +426,6 @@ export default function ImageCardEditor({
     return 'card_1';
   });
 
-  // Re-sync if initialCards prop changes
-  useEffect(() => {
-    if (initialCards && Array.isArray(initialCards) && initialCards.length > 0) {
-      setCards(JSON.parse(JSON.stringify(initialCards)));
-      setSelectedCardId(initialCards[0].id || 'card_1');
-    }
-  }, [initialCards]);
-
   // Active selected card helper
   const activeCard = cards.find(c => c.id === selectedCardId) || cards[0] || {};
 
@@ -458,12 +444,55 @@ export default function ImageCardEditor({
   });
   const [templateNameInput, setTemplateNameInput] = useState('');
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+  const [isSavedFeedback, setIsSavedFeedback] = useState(false);
   const [previewCardDims, setPreviewCardDims] = useState({ w: 38, h: 44 });
+  const previewCardRef = useRef(null);
+
+  // Auto-Save Tracking
+  const latestCardsRef = useRef(cards);
+  latestCardsRef.current = cards;
+  const isDirtyRef = useRef(false);
+  const isAutoSavingRef = useRef(false);
+  const hasPendingSaveRef = useRef(false);
 
   // 70% Height Studio Popup State
   const [isStudioPopupOpen, setIsStudioPopupOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('target'); // 'target' | 'content' | 'style' | 'templates'
-  const [isSaving, setIsSaving] = useState(false);
+  const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
+
+  // Safe measurement of mini preview card dimensions (avoids setState in render callback)
+  useEffect(() => {
+    if (!isStudioPopupOpen || !previewCardRef.current) return;
+    const el = previewCardRef.current;
+    const parent = el.parentElement;
+    if (!parent) return;
+
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      const pr = parent.getBoundingClientRect();
+      if (pr.width > 0 && pr.height > 0) {
+        const pw = (r.width / pr.width) * 100;
+        const ph = (r.height / pr.height) * 100;
+        setPreviewCardDims(prev => {
+          if (Math.abs((prev.w || 0) - pw) > 1 || Math.abs((prev.h || 0) - ph) > 1) {
+            return { w: pw, h: ph };
+          }
+          return prev;
+        });
+      }
+    };
+
+    const id = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(id);
+  }, [
+    isStudioPopupOpen,
+    activeTab,
+    activeCard?.titleText,
+    activeCard?.priceText,
+    activeCard?.scale,
+    activeCard?.hasSizes,
+    activeCard?.sizesList
+  ]);
 
   // Full Download Preview Lightbox State
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -475,35 +504,104 @@ export default function ImageCardEditor({
   const workspaceRef = useRef(null);
   const imageRef = useRef(null);
   const dragActionRef = useRef(null);
+  const cardElementsRef = useRef({});
 
 
-  // Lock body scroll and prevent pull-to-refresh while editor is open
+  // Lock body scroll while editor is open (allow native touch-action inside sheet)
   useEffect(() => {
     const origOverflow = document.body.style.overflow;
-    const origTouchAction = document.body.style.touchAction;
     document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
 
     return () => {
       document.body.style.overflow = origOverflow;
-      document.body.style.touchAction = origTouchAction;
     };
   }, []);
 
   // Update the currently active card (only affects this selected card!)
   const updateActiveCard = useCallback((updates) => {
+    const targetId = selectedCardId || (cards[0] && cards[0].id);
     setCards(prev => prev.map(c => {
-      if (c.id === (activeCard.id || selectedCardId)) {
+      if (c.id === targetId) {
         return { ...c, ...updates };
       }
       return c;
     }));
-  }, [activeCard.id, selectedCardId]);
+  }, [selectedCardId, cards]);
+
+  // Robust, instant toggle for switches (instant single-tap response with correct defaults)
+  const toggleActiveCardKey = useCallback((key) => {
+    const targetId = selectedCardId || (cards[0] && cards[0].id);
+    const isDefaultTrue = ['hasBorder', 'hasCard', 'hasTargetLine', 'hasSizes'].includes(key);
+
+    setCards(prev => prev.map(c => {
+      if (c.id === targetId) {
+        const curVal = isDefaultTrue ? (c[key] !== false) : !!c[key];
+        return { ...c, [key]: !curVal };
+      }
+      return c;
+    }));
+  }, [selectedCardId, cards]);
+
+  // Exact perimeter attachment calculator based on real DOM card bounding box
+  const getCardPerimeterAnchor = useCallback((card) => {
+    const el = cardElementsRef.current[card.id];
+    let cardW = card.width || 20;
+    let cardH = card.height || 12;
+    if (el && workspaceRef.current) {
+      const cr = el.getBoundingClientRect();
+      const wr = workspaceRef.current.getBoundingClientRect();
+      if (wr.width > 0 && wr.height > 0) {
+        cardW = (cr.width / wr.width) * 100;
+        cardH = (cr.height / wr.height) * 100;
+      }
+    }
+    const fitted = { ...card, width: cardW, height: cardH };
+    return getAnchorPoint(fitted, card.targetPos, card.targetAnchor);
+  }, []);
 
   // Update specific card by ID
   const updateCardById = useCallback((id, updates) => {
     setCards(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)));
   }, []);
+
+  // Switch to another uploaded photo
+  const handleSelectPhoto = async (targetIndex) => {
+    if (targetIndex === imageIndex) {
+      setIsPhotoPickerOpen(false);
+      return;
+    }
+    // Auto-save current photo edits before switching
+    try {
+      const { blob } = await generateBakedBlob(cards);
+      const fileName = (imageFile && imageFile.name) || `edited-image-${imageIndex + 1}.jpg`;
+      const updatedFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+      const updatedUrl = URL.createObjectURL(blob);
+      if (onSave) {
+        onSave({
+          index: imageIndex,
+          file: updatedFile,
+          previewUrl: updatedUrl,
+          cards: cards,
+          baseImageUrl: activeImageUrl || imageUrl
+        });
+      }
+    } catch (err) {
+      console.warn('Auto-save on photo switch failed', err);
+      if (onSave) {
+        onSave({
+          index: imageIndex,
+          file: imageFile,
+          previewUrl: activeImageUrl || imageUrl,
+          cards: cards,
+          baseImageUrl: activeImageUrl || imageUrl
+        });
+      }
+    }
+    setIsPhotoPickerOpen(false);
+    if (onSelectImageIndex) {
+      onSelectImageIndex(targetIndex);
+    }
+  };
 
   // Add a new card to photo (can add multiple cards!)
   const handleAddCard = () => {
@@ -557,16 +655,31 @@ export default function ImageCardEditor({
   };
 
   // Save current card as custom preset
-  const handleSaveTemplate = () => {
-    const name = templateNameInput.trim() || `Preset ${customTemplates.length + 1}`;
+  const handleSaveTemplate = (customName) => {
+    const defaultName = activeCard.titleText
+      ? `${activeCard.titleText} Design`
+      : `Design ${customTemplates.length + 1}`;
+    const name = (typeof customName === 'string' && customName.trim())
+      ? customName.trim()
+      : (templateNameInput.trim() || defaultName);
+
     const newTpl = {
       id: Date.now().toString(),
       name,
       glassStyle: activeCard.glassStyle,
-      fontFamily: activeCard.fontFamily,
+      glassOpacity: activeCard.glassOpacity,
+      glassBlur: activeCard.glassBlur,
+      glassTint: activeCard.glassTint,
+      textColor: activeCard.textColor,
       textColorMode: activeCard.textColorMode,
+      themeColor: activeCard.themeColor,
+      hasBorder: activeCard.hasBorder,
+      fontFamily: activeCard.fontFamily,
       titleText: activeCard.titleText,
       priceText: activeCard.priceText,
+      priceAmount: activeCard.priceAmount,
+      priceCurrency: activeCard.priceCurrency,
+      isPrefixCurrency: activeCard.isPrefixCurrency,
       hasDivider: activeCard.hasDivider,
       hasSizes: activeCard.hasSizes,
       sizesList: [...(activeCard.sizesList || [])],
@@ -574,6 +687,8 @@ export default function ImageCardEditor({
       tagText: activeCard.tagText,
       hasTargetLine: activeCard.hasTargetLine,
       targetAnchor: activeCard.targetAnchor,
+      lineStyle: activeCard.lineStyle,
+      scale: activeCard.scale,
       cardWidth: activeCard.width,
       cardHeight: activeCard.height
     };
@@ -589,6 +704,12 @@ export default function ImageCardEditor({
     setTemplateNameInput('');
     setSaveSuccessMsg(`Saved "${name}"!`);
     setTimeout(() => setSaveSuccessMsg(''), 2500);
+  };
+
+  const handleQuickSaveDesign = () => {
+    handleSaveTemplate();
+    setIsSavedFeedback(true);
+    setTimeout(() => setIsSavedFeedback(false), 2000);
   };
 
   const handleDeleteTemplate = (id) => {
@@ -648,21 +769,17 @@ export default function ImageCardEditor({
       ...(tpl.lineStyle ? { lineStyle: tpl.lineStyle } : {}),
       ...(tpl.anchorStyle ? { anchorStyle: tpl.anchorStyle } : {}),
       ...(tpl.glassStyle ? { glassStyle: tpl.glassStyle } : {}),
+      ...(tpl.glassOpacity !== undefined ? { glassOpacity: tpl.glassOpacity } : {}),
+      ...(tpl.glassBlur !== undefined ? { glassBlur: tpl.glassBlur } : {}),
+      ...(tpl.glassTint !== undefined ? { glassTint: tpl.glassTint } : {}),
+      ...(tpl.textColor !== undefined ? { textColor: tpl.textColor } : {}),
       ...(tpl.textColorMode ? { textColorMode: tpl.textColorMode } : {}),
+      ...(tpl.hasBorder !== undefined ? { hasBorder: tpl.hasBorder } : {}),
       ...(tpl.fontFamily ? { fontFamily: tpl.fontFamily } : {}),
       ...(tpl.themeColor ? { themeColor: tpl.themeColor } : {}),
       ...(tpl.scale !== undefined ? { scale: tpl.scale } : {}),
       ...(tpl.cardWidth && tpl.cardHeight ? { width: tpl.cardWidth, height: tpl.cardHeight } : {})
     });
-    if (tpl.sizesList) {
-      setAvailableSizes(prev => {
-        const merged = [...prev];
-        tpl.sizesList.forEach(s => {
-          if (!merged.includes(s)) merged.push(s);
-        });
-        return merged;
-      });
-    }
   };
 
   // --- Pointer & Touch Dragging for Any Card ---
@@ -835,6 +952,20 @@ export default function ImageCardEditor({
     };
   }, [handleMoveDrag, handleEndDrag, handlePinchMove, handlePinchEnd]);
 
+  // When bottom sheet popup opens, immediately detach any active window drag listeners
+  // and clear drag states so mobile taps inside the studio sheet respond instantly
+  useEffect(() => {
+    if (isStudioPopupOpen) {
+      dragActionRef.current = null;
+      window.removeEventListener('mousemove', handleMoveDrag);
+      window.removeEventListener('mouseup', handleEndDrag);
+      window.removeEventListener('touchmove', handleMoveDrag);
+      window.removeEventListener('touchend', handleEndDrag);
+      window.removeEventListener('touchmove', handlePinchMove);
+      window.removeEventListener('touchend', handlePinchEnd);
+    }
+  }, [isStudioPopupOpen, handleMoveDrag, handleEndDrag, handlePinchMove, handlePinchEnd]);
+
   const handleReset = () => {
     setCards([
       {
@@ -871,7 +1002,7 @@ export default function ImageCardEditor({
   };
 
   // --- High-Resolution Canvas Bake Helper (Draws ALL Cards) ---
-  const generateBakedBlob = async () => {
+  const generateBakedBlob = async (cardsToBake = cards) => {
     const srcToUse = activeImageUrl || imageUrl;
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -899,7 +1030,6 @@ export default function ImageCardEditor({
     const natH = img.naturalHeight || img.height;
 
     const screenW = (workspaceRef.current && workspaceRef.current.clientWidth) || (imageRef.current && imageRef.current.clientWidth) || 400;
-    const canvasScale = natW / Math.max(100, screenW);
 
     const canvas = document.createElement('canvas');
     canvas.width = natW;
@@ -910,9 +1040,9 @@ export default function ImageCardEditor({
     ctx.drawImage(img, 0, 0, natW, natH);
 
     // 2. Draw all cards using unified renderer
-    drawCardsOnCanvas(ctx, img, natW, natH, cards, screenW);
-
-
+    if (cardsToBake && cardsToBake.length > 0) {
+      drawCardsOnCanvas(ctx, img, natW, natH, cardsToBake, screenW);
+    }
 
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -926,9 +1056,80 @@ export default function ImageCardEditor({
     });
   };
 
+  // Perform Auto-Save whenever user edits cards
+  const performAutoSave = useCallback(async (cardsToSave) => {
+    const currentCards = cardsToSave || latestCardsRef.current;
+    if (!onSave) return;
+
+    if (currentCards.length === 0) {
+      onSave({
+        index: imageIndex,
+        file: imageFile,
+        previewUrl: activeImageUrl || imageUrl,
+        cards: [],
+        baseImageUrl: activeImageUrl || imageUrl
+      });
+      isDirtyRef.current = false;
+      return;
+    }
+
+    if (isAutoSavingRef.current) {
+      hasPendingSaveRef.current = true;
+      return;
+    }
+
+    isAutoSavingRef.current = true;
+
+    try {
+      const { blob } = await generateBakedBlob(currentCards);
+      const fileName = (imageFile && imageFile.name) || `edited-image-${imageIndex + 1}.jpg`;
+      const updatedFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+      const updatedUrl = URL.createObjectURL(blob);
+
+      onSave({
+        index: imageIndex,
+        file: updatedFile,
+        previewUrl: updatedUrl,
+        cards: currentCards,
+        baseImageUrl: activeImageUrl || imageUrl
+      });
+      isDirtyRef.current = false;
+    } catch (err) {
+      console.error('Auto-save failed:', err);
+    } finally {
+      isAutoSavingRef.current = false;
+      if (hasPendingSaveRef.current) {
+        hasPendingSaveRef.current = false;
+        performAutoSave(latestCardsRef.current);
+      }
+    }
+  }, [imageIndex, imageFile, activeImageUrl, imageUrl, onSave]);
+
+  // Debounced Auto-Save on any card mutation
+  useEffect(() => {
+    isDirtyRef.current = true;
+    const timer = setTimeout(() => {
+      performAutoSave(cards);
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [cards, performAutoSave]);
+
+  // Handle Back: ensures any pending edits are baked and saved before closing
+  const handleBack = async () => {
+    if (isDirtyRef.current) {
+      try {
+        await performAutoSave(latestCardsRef.current);
+      } catch (e) {
+        console.error('Save on exit failed:', e);
+      }
+    }
+    onClose();
+  };
+
   // Open Full Download Preview Modal
   const handleOpenFinalPreview = async () => {
-    if (isSaving || isGeneratingPreview) return;
+    if (isGeneratingPreview) return;
     setIsGeneratingPreview(true);
     try {
       const { blob, dataUrl } = await generateBakedBlob();
@@ -955,61 +1156,19 @@ export default function ImageCardEditor({
     document.body.removeChild(a);
   };
 
-  // Apply & Save directly from Preview Modal
-  const handleSaveFromPreview = () => {
-    if (!previewBlob) return;
-    const fileName = (imageFile && imageFile.name) || `edited-image-${imageIndex + 1}.jpg`;
-    const updatedFile = new File([previewBlob], fileName, { type: previewBlob.type || 'image/jpeg' });
-    const updatedUrl = URL.createObjectURL(previewBlob);
-
-    onSave({
-      index: imageIndex,
-      file: updatedFile,
-      previewUrl: updatedUrl,
-      cards: cards,
-      baseImageUrl: activeImageUrl || imageUrl
-    });
-
-    setIsPreviewModalOpen(false);
-    onClose();
-  };
-
-  // Save and Apply directly from main bottom bar
-  const handleSaveAndApply = async () => {
-    if (cards.length === 0) {
-      onClose();
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const { blob } = await generateBakedBlob();
-      const fileName = (imageFile && imageFile.name) || `edited-image-${imageIndex + 1}.jpg`;
-      const updatedFile = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
-      const updatedUrl = URL.createObjectURL(blob);
-
-      onSave({
-        index: imageIndex,
-        file: updatedFile,
-        previewUrl: updatedUrl,
-        cards: cards,
-        baseImageUrl: activeImageUrl || imageUrl
-      });
-
-      setIsSaving(false);
-      onClose();
-    } catch (err) {
-      console.error('Failed to bake card into image:', err);
-      setIsSaving(false);
-    }
-  };
-
   // Active Card Preview line & anchor geometry for the bottom sheet preview
   const activeAnchor = getAnchorPoint(activeCard, activeCard.targetPos, activeCard.targetAnchor);
   const activeThemeColor = getCardThemeColor(activeCard);
   const previewSide = activeCard.targetAnchor === 'auto' ? (activeAnchor.side || 'left') : activeCard.targetAnchor;
   const isStraightPreview = activeCard.lineStyle === 'straight';
+
+  // Calculate target area focus coordinates in photo percentage
+  const targetX = activeCard.targetPos?.x ?? 50;
+  const targetY = activeCard.targetPos?.y ?? 50;
+  const cardX = activeCard.x ?? 50;
+  const cardY = activeCard.y ?? 50;
+  const previewFocusX = clamp(Math.round((targetX * 0.6) + (cardX * 0.4)), 0, 100);
+  const previewFocusY = clamp(Math.round((targetY * 0.6) + (cardY * 0.4)), 0, 100);
 
   const pCardW = previewCardDims.w || 38;
   const pCardH = previewCardDims.h || 44;
@@ -1039,38 +1198,40 @@ export default function ImageCardEditor({
       : `M ${pAnchor.x} ${pAnchor.y} C 50 ${pAnchor.y + 10}, 36 88, ${pTarget.x} ${pTarget.y}`;
   }
 
-  return createPortal(
-    <div className="insta-editor-fullscreen animate-fade-in">
+  return (
+    <div className="watermark-studio-page ice-subpage animate-fade-in">
       {/* ============================================================ */}
       {/* TOP BAR: BACK BUTTON, STATUS CAPSULE & RESET                 */}
       {/* ============================================================ */}
-      <header className="insta-top-bar">
-        <button
-          className="btn btn-glass btn-icon-only insta-back-chevron"
-          onClick={onClose}
-          title="Back"
-        >
-          <ArrowLeft size={16} />
-        </button>
+      <div className="watermark-studio-header" style={{ justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            className="btn btn-glass btn-icon-only"
+            onClick={handleBack}
+            title="Back to Watermark Studio"
+          >
+            <ArrowLeft size={16} />
+          </button>
 
-        <div className="insta-header-capsule">
-          <Sparkles size={13} className="insta-capsule-icon" />
-          <span>Glass Card Studio ({cards.length} {cards.length === 1 ? 'Card' : 'Cards'})</span>
+          <div className="insta-header-capsule" style={{ margin: 0 }}>
+            <Sparkles size={13} className="insta-capsule-icon" />
+            <span>Glass Card Studio ({cards.length} {cards.length === 1 ? 'Card' : 'Cards'})</span>
+          </div>
         </div>
 
         <button
-          className="btn btn-glass btn-icon-only insta-back-chevron"
+          className="btn btn-glass btn-icon-only"
           onClick={handleReset}
           title="Reset Cards to Default"
         >
           <RotateCcw size={16} />
         </button>
-      </header>
+      </div>
 
       {/* ============================================================ */}
-      {/* FULLSCREEN WORKSPACE CANVAS (RENDERS ALL CARDS)              */}
+      {/* WORKSPACE CANVAS (RENDERS ALL CARDS)                         */}
       {/* ============================================================ */}
-      <main className="insta-canvas-area">
+      <div className="ice-canvas-container">
         <div
           className="insta-image-wrapper"
           ref={workspaceRef}
@@ -1080,7 +1241,7 @@ export default function ImageCardEditor({
             ref={imageRef}
             src={activeImageUrl || imageUrl}
             alt="Workspace Canvas"
-            className="insta-base-img insta-photo-display"
+            className="insta-base-img"
             draggable={false}
             onError={handleImageError}
           />
@@ -1089,41 +1250,38 @@ export default function ImageCardEditor({
           {cards.map((card) => {
             if (!card.hasCard) return null;
             const isSelected = card.id === activeCard.id;
-            const cardAnchor = getAnchorPoint(card, card.targetPos, card.targetAnchor);
+            const cardAnchor = getCardPerimeterAnchor(card);
             const cardCurve = getConnectorCurve(cardAnchor, card.targetPos, cardAnchor.side, card.lineStyle || 'curved');
             const cardThemeColor = getCardThemeColor(card);
 
             return (
               <React.Fragment key={card.id}>
-                {/* Target Pointer Vector Line (Curved or Straight in Theme Color) */}
+                {/* Target Pointer Vector Line (Sleek Luxury Callout with Ambient Shadow) */}
                 {card.hasTargetLine && (
                   <svg
                     className="ice-pointer-svg-layer"
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                   >
-                    {/* Drop Shadow Line */}
-                    <path
-                      d={cardCurve.d}
-                      fill="none"
-                      stroke="rgba(0, 0, 0, 0.45)"
-                      strokeWidth="2.5"
-                      vectorEffect="non-scaling-stroke"
-                      strokeLinecap="round"
-                    />
-                    {/* Crisp Theme Color Line */}
+                    <defs>
+                      <filter id={`line-soft-shadow-${card.id}`} x="-30%" y="-30%" width="160%" height="160%">
+                        <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodColor="rgba(0, 0, 0, 0.45)" />
+                      </filter>
+                    </defs>
                     <path
                       d={cardCurve.d}
                       fill="none"
                       stroke={cardThemeColor}
-                      strokeWidth="1.5"
-                      vectorEffect="non-scaling-stroke"
+                      strokeWidth="1.35"
                       strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      filter={`url(#line-soft-shadow-${card.id})`}
                     />
                   </svg>
                 )}
 
-                {/* Target Pin (Small, clean, professional circle in Theme Color - no glow) */}
+                {/* Target Pin (Precision Luminous Dot in Theme Color) */}
                 {card.hasTargetLine && (
                   <div
                     className="ice-target-pin"
@@ -1144,69 +1302,13 @@ export default function ImageCardEditor({
                   </div>
                 )}
 
-                {/* Connection Anchor on Card Border (Capsule Badge or Small Circle in Theme Color) */}
-                {card.hasTargetLine && (
-                  card.anchorStyle === 'circle' ? (
-                    <div
-                      className="ice-card-anchor-circle"
-                      style={{
-                        left: `${cardAnchor.x}%`,
-                        top: `${cardAnchor.y}%`,
-                        '--cscale': card.width / 50,
-                        '--card-theme-color': cardThemeColor
-                      }}
-                      onMouseDown={(e) => handleStartDrag(e, 'anchor', card.id)}
-                      onTouchStart={(e) => handleStartDrag(e, 'anchor', card.id)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCardId(card.id);
-                        setIsStudioPopupOpen(true);
-                      }}
-                      title="Drag circle along border to change connection point • Tap to customize"
-                    />
-                  ) : (
-                    <div
-                      className={`ice-card-anchor-capsule ${
-                        cardAnchor.side === 'top' || cardAnchor.side === 'bottom'
-                          ? 'side-horizontal'
-                          : 'side-vertical'
-                      }`}
-                      style={{
-                        left: `${cardAnchor.x}%`,
-                        top: `${cardAnchor.y}%`,
-                        '--cscale': card.width / 50,
-                        '--card-theme-color': cardThemeColor
-                      }}
-                      onMouseDown={(e) => handleStartDrag(e, 'anchor', card.id)}
-                      onTouchStart={(e) => handleStartDrag(e, 'anchor', card.id)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCardId(card.id);
-                        setIsStudioPopupOpen(true);
-                      }}
-                      title="Drag capsule along border to change connection point • Tap to customize"
-                    >
-                      {renderAnchorArrow(cardAnchor.side, cardAnchor.arrow)}
-                    </div>
-                  )
-                )}
-
-                {/* Draggable Glass Card with Auto-Fit Width to Text */}
+                {/* Draggable Glass Card with Auto-Fit Width to Text (Seamless Line Junction) */}
                 <div
                   ref={(el) => {
-                    if (el && workspaceRef.current) {
-                      const cardRect = el.getBoundingClientRect();
-                      const parentRect = workspaceRef.current.getBoundingClientRect();
-                      if (parentRect.width > 0 && parentRect.height > 0) {
-                        const curW = (cardRect.width / parentRect.width) * 100;
-                        const curH = (cardRect.height / parentRect.height) * 100;
-                        if (Math.abs((card.width || 0) - curW) > 0.4 || Math.abs((card.height || 0) - curH) > 0.4) {
-                          updateCardById(card.id, { width: curW, height: curH });
-                        }
-                      }
-                    }
+                    if (el) cardElementsRef.current[card.id] = el;
                   }}
-                  className={`ice-card glass-${card.glassStyle} text-mode-${card.textColorMode} ${isSelected ? 'is-active-card' : ''}`}
+                  id={`ice-card-${card.id}`}
+                  className={`ice-card glass-${card.glassStyle} text-mode-${card.textColorMode} ${card.hasBorder === false ? 'no-border' : 'has-glass-border'} ${isSelected ? 'is-active-card' : ''}`}
                   style={{
                     left: `${card.x}%`,
                     top: `${card.y}%`,
@@ -1215,7 +1317,10 @@ export default function ImageCardEditor({
                     height: 'auto',
                     '--cscale': card.scale !== undefined ? card.scale : 0.6,
                     '--card-theme-color': cardThemeColor,
-                    fontFamily: card.fontFamily
+                    '--card-glass-stroke': getCardGlassStroke(card),
+                    '--card-custom-text': card.textColor || (card.textColorMode === 'dark' ? '#0f172a' : '#ffffff'),
+                    fontFamily: card.fontFamily,
+                    ...getCardGlassStyleObj(card)
                   }}
                   onMouseDown={(e) => handleStartDrag(e, 'move', card.id)}
                   onTouchStart={(e) => {
@@ -1392,26 +1497,12 @@ export default function ImageCardEditor({
             );
           })}
         </div>
-      </main>
-
-      {/* ============================================================ */}
-      {/* ADD CARD ACTION BUTTON                                       */}
-      {/* ============================================================ */}
-      <section className="insta-single-action-row" onClick={(e) => e.stopPropagation()}>
-        <button
-          className="insta-plus-box-btn"
-          onClick={handleAddCard}
-          title="Add multiple product cards to this photo"
-        >
-          <SquarePlus size={22} className="insta-box-plus-icon" />
-          <span>Add Card</span>
-        </button>
-      </section>
+      </div>
 
       {/* ============================================================ */}
       {/* 70% HEIGHT iOS CARD & TARGET STUDIO POPUP                    */}
       {/* ============================================================ */}
-      {isStudioPopupOpen && (
+      {isStudioPopupOpen && createPortal(
         <>
           {/* Dimmed backdrop overlay */}
           <div
@@ -1427,13 +1518,9 @@ export default function ImageCardEditor({
             {/* Grabber handle */}
             <div className="ios-sheet-handle" />
 
-            {/* Header */}
-            <div className="ios-sheet-header-centered">
-              <h3 className="ios-sheet-heading">Card & Target Studio</h3>
-              <p className="ios-sheet-subheading">
-                Editing {activeCard.titleText ? `"${activeCard.titleText}"` : `Card #${cards.findIndex(c => c.id === activeCard.id) + 1}`}
-              </p>
-              {cards.length > 1 && (
+            {/* Card selector when multiple cards exist */}
+            {cards.length > 1 && (
+              <div className="ios-sheet-header-centered" style={{ marginBottom: '8px' }}>
                 <div className="ios-sheet-card-selector-row">
                   {cards.map((c, idx) => (
                     <button
@@ -1455,39 +1542,56 @@ export default function ImageCardEditor({
                     <span>Add</span>
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Live Card & Connection Line Preview Showcase */}
             <div className="ios-sheet-preview-wrapper">
               <div className="ios-sheet-card-showcase-stage">
-                {/* Preview Connection Line */}
+                {/* Real Target Area Photo Background (Original Crisp Photo) */}
+                {(activeImageUrl || imageUrl) && (
+                  <div className="ios-preview-photo-viewport">
+                    <img
+                      src={activeImageUrl || imageUrl}
+                      alt="Edit Target Area"
+                      className="ios-preview-photo-img"
+                      style={{
+                        objectPosition: `${previewFocusX}% ${previewFocusY}%`
+                      }}
+                    />
+                    <div className="ios-preview-photo-badge">
+                      <Target size={11} />
+                      <span>Target Focus</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview Connection Line (Sleek Luxury Callout) */}
                 {activeCard.hasTargetLine && (
                   <svg
                     className="ios-preview-svg"
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                   >
-                    <path
-                      d={pPath}
-                      fill="none"
-                      stroke="rgba(0, 0, 0, 0.45)"
-                      strokeWidth="2.5"
-                      vectorEffect="non-scaling-stroke"
-                      strokeLinecap="round"
-                    />
+                    <defs>
+                      <filter id="preview-line-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodColor="rgba(0, 0, 0, 0.45)" />
+                      </filter>
+                    </defs>
                     <path
                       d={pPath}
                       fill="none"
                       stroke={activeThemeColor}
-                      strokeWidth="1.5"
-                      vectorEffect="non-scaling-stroke"
+                      strokeWidth="1.35"
                       strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      filter="url(#preview-line-soft-shadow)"
                     />
                   </svg>
                 )}
 
-                {/* Preview Target Pin (No Glow) */}
+                {/* Preview Target Pin (Precision Luminous Dot) */}
                 {activeCard.hasTargetLine && (
                   <div
                     className="ice-target-pin"
@@ -1502,60 +1606,20 @@ export default function ImageCardEditor({
                   </div>
                 )}
 
-                {/* Preview Connection Anchor on Border */}
-                {activeCard.hasTargetLine && (
-                  activeCard.anchorStyle === 'circle' ? (
-                    <div
-                      className="ice-card-anchor-circle ios-preview-circle"
-                      style={{
-                        left: `${pAnchor.x}%`,
-                        top: `${pAnchor.y}%`,
-                        '--cscale': 0.95,
-                        '--card-theme-color': activeThemeColor
-                      }}
-                    />
-                  ) : (
-                    <div
-                      className={`ice-card-anchor-capsule ios-preview-capsule ${
-                        previewSide === 'top' || previewSide === 'bottom'
-                          ? 'side-horizontal'
-                          : 'side-vertical'
-                      }`}
-                      style={{
-                        left: `${pAnchor.x}%`,
-                        top: `${pAnchor.y}%`,
-                        '--cscale': 0.95,
-                        '--card-theme-color': activeThemeColor
-                      }}
-                    >
-                      {renderAnchorArrow(previewSide, activeAnchor.arrow)}
-                    </div>
-                  )
-                )}
-
                 {/* Centered Glass Card with Auto-Fit Width */}
                 <div
-                  ref={(el) => {
-                    if (el && el.parentElement) {
-                      const r = el.getBoundingClientRect();
-                      const pr = el.parentElement.getBoundingClientRect();
-                      if (pr.width > 0 && pr.height > 0) {
-                        const pw = (r.width / pr.width) * 100;
-                        const ph = (r.height / pr.height) * 100;
-                        if (Math.abs((previewCardDims.w || 0) - pw) > 0.4 || Math.abs((previewCardDims.h || 0) - ph) > 0.4) {
-                          setPreviewCardDims({ w: pw, h: ph });
-                        }
-                      }
-                    }
-                  }}
-                  className={`ice-card glass-${activeCard.glassStyle} text-mode-${activeCard.textColorMode} ios-preview-glass-card`}
+                  ref={previewCardRef}
+                  className={`ice-card glass-${activeCard.glassStyle} text-mode-${activeCard.textColorMode} ${activeCard.hasBorder === false ? 'no-border' : 'has-glass-border'} ios-preview-glass-card`}
                   style={{
                     width: 'max-content',
                     maxWidth: '78%',
                     height: 'auto',
                     '--cscale': (activeCard.scale !== undefined ? activeCard.scale : 0.6) * 0.95,
                     '--card-theme-color': activeThemeColor,
-                    fontFamily: activeCard.fontFamily
+                    '--card-glass-stroke': getCardGlassStroke(activeCard),
+                    '--card-custom-text': activeCard.textColor || (activeCard.textColorMode === 'dark' ? '#0f172a' : '#ffffff'),
+                    fontFamily: activeCard.fontFamily,
+                    ...getCardGlassStyleObj(activeCard)
                   }}
                 >
                   <div className="ice-card-body">
@@ -1648,28 +1712,36 @@ export default function ImageCardEditor({
               {activeTab === 'target' && (
                 <div className="ios-sheet-content">
                   <div className="ios-sheet-group-card">
-                    <div className="ios-sheet-group-row">
+                    <div
+                      className="ios-sheet-group-row ios-sheet-row-toggle"
+                      onClick={() => toggleActiveCardKey('hasCard')}
+                      role="button"
+                      tabIndex={0}
+                    >
                       <span className="ios-sheet-label">Show Glass Card</span>
-                      <button
-                        type="button"
-                        className={`ios-switch ${activeCard.hasCard ? 'on' : ''}`}
-                        onClick={() => updateActiveCard({ hasCard: !activeCard.hasCard })}
-                        aria-label="Toggle card visibility"
+                      <div
+                        className={`ios-switch ${activeCard.hasCard !== false ? 'on' : ''}`}
+                        role="switch"
+                        aria-checked={activeCard.hasCard !== false}
                       >
                         <div className="ios-switch-thumb" />
-                      </button>
+                      </div>
                     </div>
                     <div className="ios-sheet-group-divider" />
-                    <div className="ios-sheet-group-row">
+                    <div
+                      className="ios-sheet-group-row ios-sheet-row-toggle"
+                      onClick={() => toggleActiveCardKey('hasTargetLine')}
+                      role="button"
+                      tabIndex={0}
+                    >
                       <span className="ios-sheet-label">Target Pointer Line</span>
-                      <button
-                        type="button"
-                        className={`ios-switch ${activeCard.hasTargetLine ? 'on' : ''}`}
-                        onClick={() => updateActiveCard({ hasTargetLine: !activeCard.hasTargetLine })}
-                        aria-label="Toggle target pointer line"
+                      <div
+                        className={`ios-switch ${activeCard.hasTargetLine !== false ? 'on' : ''}`}
+                        role="switch"
+                        aria-checked={activeCard.hasTargetLine !== false}
                       >
                         <div className="ios-switch-thumb" />
-                      </button>
+                      </div>
                     </div>
                   </div>
 
@@ -1746,65 +1818,6 @@ export default function ImageCardEditor({
                     </div>
                   )}
 
-                  {activeCard.hasTargetLine && (
-                    <div className="ios-sheet-group-card" style={{ padding: '14px', marginTop: '10px' }}>
-                      <div className="ios-anchor-header">
-                        <span className="ios-sheet-label" style={{ fontSize: '0.85rem' }}>
-                          Card Anchor End Design
-                        </span>
-                        <span className="ios-sheet-hint-tag">
-                          {activeCard.anchorStyle === 'circle' ? 'Small Circle' : 'Capsule Arrow'}
-                        </span>
-                      </div>
-                      <p className="ios-sheet-field-desc">
-                        Choose capsule with directional arrow or small clean circle:
-                      </p>
-
-                      <div className="ice-line-style-selector">
-                        <button
-                          type="button"
-                          className={`ice-line-style-btn ${activeCard.anchorStyle !== 'circle' ? 'active' : ''}`}
-                          onClick={() => updateActiveCard({ anchorStyle: 'capsule' })}
-                        >
-                          <div style={{
-                            width: '18px',
-                            height: '10px',
-                            borderRadius: '999px',
-                            background: 'rgba(255, 255, 255, 0.22)',
-                            border: '1.2px solid currentColor',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <div style={{
-                              width: 0,
-                              height: 0,
-                              borderTop: '2.5px solid transparent',
-                              borderBottom: '2.5px solid transparent',
-                              borderLeft: '3.5px solid currentColor'
-                            }} />
-                          </div>
-                          <span>Capsule Arrow</span>
-                        </button>
-                        <button
-                          type="button"
-                          className={`ice-line-style-btn ${activeCard.anchorStyle === 'circle' ? 'active' : ''}`}
-                          onClick={() => updateActiveCard({ anchorStyle: 'circle' })}
-                        >
-                          <div style={{
-                            width: '10px',
-                            height: '10px',
-                            borderRadius: '50%',
-                            background: 'currentColor',
-                            border: '1.2px solid currentColor',
-                            boxSizing: 'border-box'
-                          }} />
-                          <span>Small Circle</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Unified Color Theme Palette (Card Border, Pointer Line & Target Dot) */}
                   <div className="ios-sheet-group-card" style={{ padding: '14px', marginTop: '10px' }}>
                     <div className="ios-anchor-header">
@@ -1853,21 +1866,22 @@ export default function ImageCardEditor({
               {/* TAB 2: CARD CONTENT */}
               {activeTab === 'content' && (
                 <div className="ios-sheet-content">
-                  <div className="ios-sheet-group-card">
-                    <div className="ios-sheet-group-row">
-                      <span className="ios-sheet-label">Title</span>
+                  <div className="ios-sheet-group-card" style={{ gap: '14px', padding: '14px' }}>
+                    {/* Title Input Box */}
+                    <div className="ios-form-field">
+                      <label className="ios-form-label">Title</label>
                       <input
                         type="text"
                         value={activeCard.titleText || ''}
                         onChange={(e) => updateActiveCard({ titleText: e.target.value })}
                         placeholder="e.g. Top, Hoodie, Villa"
-                        className="ios-sheet-input"
+                        className="ios-form-input-box"
                       />
                     </div>
-                    <div className="ios-sheet-group-divider" />
-                    {/* Price Amount Input */}
-                    <div className="ios-sheet-group-row">
-                      <span className="ios-sheet-label">Price Amount</span>
+
+                    {/* Price Amount Input Box */}
+                    <div className="ios-form-field">
+                      <label className="ios-form-label">Price Amount</label>
                       <input
                         type="text"
                         value={(() => {
@@ -1896,14 +1910,16 @@ export default function ImageCardEditor({
                           });
                         }}
                         placeholder="e.g. 76,000"
-                        className="ios-sheet-input"
+                        className="ios-form-input-box"
                       />
                     </div>
-                    <div className="ios-sheet-group-divider" />
+
+                    <div className="ios-sheet-group-divider" style={{ margin: '2px 0' }} />
+
                     {/* Selectable Currency Row */}
-                    <div className="ios-sheet-group-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+                    <div className="ios-form-field">
                       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                        <span className="ios-sheet-label">Currency</span>
+                        <label className="ios-form-label">Currency</label>
                         <span className="ios-sheet-hint-tag">
                           {parseCardPrice(activeCard).currency || 'None'}
                         </span>
@@ -1952,26 +1968,36 @@ export default function ImageCardEditor({
                   </div>
 
                   <div className="ios-sheet-group-card">
-                    <div className="ios-sheet-group-row">
+                    <div
+                      className="ios-sheet-group-row ios-sheet-row-toggle"
+                      onClick={() => toggleActiveCardKey('hasDivider')}
+                      role="button"
+                      tabIndex={0}
+                    >
                       <span className="ios-sheet-label">Divider Line</span>
-                      <button
-                        type="button"
+                      <div
                         className={`ios-switch ${activeCard.hasDivider ? 'on' : ''}`}
-                        onClick={() => updateActiveCard({ hasDivider: !activeCard.hasDivider })}
+                        role="switch"
+                        aria-checked={activeCard.hasDivider}
                       >
                         <div className="ios-switch-thumb" />
-                      </button>
+                      </div>
                     </div>
                     <div className="ios-sheet-group-divider" />
-                    <div className="ios-sheet-group-row">
+                    <div
+                      className="ios-sheet-group-row ios-sheet-row-toggle"
+                      onClick={() => toggleActiveCardKey('hasSizes')}
+                      role="button"
+                      tabIndex={0}
+                    >
                       <span className="ios-sheet-label">Sizes / Badges Row</span>
-                      <button
-                        type="button"
-                        className={`ios-switch ${activeCard.hasSizes ? 'on' : ''}`}
-                        onClick={() => updateActiveCard({ hasSizes: !activeCard.hasSizes })}
+                      <div
+                        className={`ios-switch ${activeCard.hasSizes !== false ? 'on' : ''}`}
+                        role="switch"
+                        aria-checked={activeCard.hasSizes !== false}
                       >
                         <div className="ios-switch-thumb" />
-                      </button>
+                      </div>
                     </div>
                   </div>
 
@@ -2085,27 +2111,32 @@ export default function ImageCardEditor({
                   )}
 
                   <div className="ios-sheet-group-card">
-                    <div className="ios-sheet-group-row">
+                    <div
+                      className="ios-sheet-group-row ios-sheet-row-toggle"
+                      onClick={() => toggleActiveCardKey('hasTag')}
+                      role="button"
+                      tabIndex={0}
+                    >
                       <span className="ios-sheet-label">Top Highlight Badge</span>
-                      <button
-                        type="button"
+                      <div
                         className={`ios-switch ${activeCard.hasTag ? 'on' : ''}`}
-                        onClick={() => updateActiveCard({ hasTag: !activeCard.hasTag })}
+                        role="switch"
+                        aria-checked={activeCard.hasTag}
                       >
                         <div className="ios-switch-thumb" />
-                      </button>
+                      </div>
                     </div>
                     {activeCard.hasTag && (
                       <>
                         <div className="ios-sheet-group-divider" />
-                        <div className="ios-sheet-group-row">
-                          <span className="ios-sheet-label">Badge Text</span>
+                        <div className="ios-form-field" style={{ padding: '0 14px 12px 14px' }}>
+                          <label className="ios-form-label">Badge Text</label>
                           <input
                             type="text"
                             value={activeCard.tagText || ''}
                             onChange={(e) => updateActiveCard({ tagText: e.target.value })}
-                            placeholder="FEATURED, SPECIAL, NEW"
-                            className="ios-sheet-input"
+                            placeholder="e.g. FEATURED, SPECIAL, NEW"
+                            className="ios-form-input-box"
                           />
                         </div>
                       </>
@@ -2117,104 +2148,110 @@ export default function ImageCardEditor({
               {/* TAB 3: DESIGN & STYLE */}
               {activeTab === 'style' && (
                 <div className="ios-sheet-content">
-                  {/* Card Size & Scale Control */}
-                  <div className="ios-sheet-group-card" style={{ padding: '14px', marginBottom: '10px' }}>
-                    <div className="ios-anchor-header">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="ios-sheet-label" style={{ fontSize: '0.85rem' }}>
-                          Card Size & Scale
-                        </span>
-                        <span className="ios-scale-pct-pill">
-                          {Math.round((activeCard.scale !== undefined ? activeCard.scale : 0.6) * 100)}%
-                        </span>
-                      </div>
-                      <div className="ios-scale-quick-steppers">
-                        <button
-                          type="button"
-                          className="ios-scale-step-btn"
-                          onClick={() => updateActiveCard({ scale: clamp(Math.round(((activeCard.scale !== undefined ? activeCard.scale : 0.6) - 0.1) * 100) / 100, 0.55, 1.8) })}
-                          title="Make card smaller (-10%)"
-                        >
-                          −
-                        </button>
-                        <button
-                          type="button"
-                          className="ios-scale-step-btn"
-                          onClick={() => updateActiveCard({ scale: 0.6 })}
-                          title="Reset to 60% default size"
-                        >
-                          Reset
-                        </button>
-                        <button
-                          type="button"
-                          className="ios-scale-step-btn"
-                          onClick={() => updateActiveCard({ scale: clamp(Math.round(((activeCard.scale || 0.6) + 0.1) * 100) / 100, 0.55, 1.8) })}
-                          title="Make card larger (+10%)"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Smooth Scale Slider */}
-                    <div className="ios-scale-slider-row" style={{ marginTop: '10px' }}>
-                      <span className="ios-scale-slider-label">60%</span>
-                      <input
-                        type="range"
-                        min="0.6"
-                        max="1.6"
-                        step="0.05"
-                        value={activeCard.scale || 0.6}
-                        onChange={(e) => updateActiveCard({ scale: parseFloat(e.target.value) })}
-                        className="ios-scale-slider"
-                      />
-                      <span className="ios-scale-slider-label">160%</span>
-                    </div>
-
-                    {/* Quick Preset Size Chips: Compact XS, Small S, Default M, Large L, Huge XL */}
-                    <div className="ios-scale-presets-grid" style={{ marginTop: '10px' }}>
-                      {[
-                        { label: 'Compact XS', val: 0.6 },
-                        { label: 'Small S', val: 0.8 },
-                        { label: 'Default M', val: 1.0 },
-                        { label: 'Large L', val: 1.2 },
-                        { label: 'Huge XL', val: 1.45 }
-                      ].map(preset => {
-                        const isSelected = Math.abs((activeCard.scale || 0.6) - preset.val) < 0.05;
-                        return (
-                          <button
-                            key={preset.label}
-                            type="button"
-                            className={`ios-scale-preset-chip ${isSelected ? 'active' : ''}`}
-                            onClick={() => updateActiveCard({ scale: preset.val })}
-                          >
-                            {preset.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
                   <div className="ios-sheet-group-card">
-                    <div className="ios-sheet-group-row">
-                      <span className="ios-sheet-label">Text Contrast Mode</span>
-                      <button
-                        type="button"
-                        className="ios-sheet-contrast-toggle"
-                        onClick={() => updateActiveCard({ textColorMode: activeCard.textColorMode === 'dark' ? 'light' : 'dark' })}
+                    {/* Card Border Toggle (Remove / Show Glass Border) */}
+                    <div
+                      className="ios-sheet-group-row ios-sheet-row-toggle"
+                      onClick={() => toggleActiveCardKey('hasBorder')}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div>
+                        <span className="ios-sheet-label">Card Border</span>
+                        <div className="ios-sheet-field-desc">
+                          {activeCard.hasBorder === false ? 'No border (Borderless floating glass)' : 'Glass border with translucent sheen'}
+                        </div>
+                      </div>
+                      <div
+                        className={`ios-switch ${activeCard.hasBorder !== false ? 'on' : ''}`}
+                        role="switch"
+                        aria-checked={activeCard.hasBorder !== false}
                       >
-                        {activeCard.textColorMode === 'dark' ? (
-                          <>
-                            <Moon size={15} />
-                            <span>Dark Text</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sun size={15} />
-                            <span>White Text</span>
-                          </>
-                        )}
-                      </button>
+                        <div className="ios-switch-thumb" />
+                      </div>
+                    </div>
+
+                    <div className="ios-sheet-group-divider" />
+
+                    <div className="ios-sheet-group-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <span className="ios-sheet-label">Card Text Color</span>
+                        <span className="ios-sheet-hint-tag" style={{ textTransform: 'capitalize' }}>
+                          {(() => {
+                            const curTxtColor = (activeCard.textColor || (activeCard.textColorMode === 'dark' ? '#0f172a' : '#ffffff')).toLowerCase();
+                            const preset = TEXT_COLOR_PRESETS.find(p => p.color.toLowerCase() === curTxtColor);
+                            return preset ? preset.label : 'Custom';
+                          })()}
+                        </span>
+                      </div>
+                      <div className="ice-theme-color-palette" style={{ width: '100%', marginTop: '2px' }}>
+                        {(() => {
+                          const curTxtColor = (activeCard.textColor || (activeCard.textColorMode === 'dark' ? '#0f172a' : '#ffffff')).toLowerCase();
+                          const isCustomTxt = !TEXT_COLOR_PRESETS.some(p => p.color.toLowerCase() === curTxtColor);
+                          return (
+                            <>
+                              {TEXT_COLOR_PRESETS.map((t) => {
+                                const isSelected = curTxtColor === t.color.toLowerCase();
+                                return (
+                                  <button
+                                    key={t.id}
+                                    type="button"
+                                    className={`ice-theme-color-btn ${isSelected ? 'active' : ''}`}
+                                    onClick={() => {
+                                      const dark = isColorDark(t.color);
+                                      updateActiveCard({
+                                        textColor: t.color,
+                                        textColorMode: dark ? 'dark' : 'light'
+                                      });
+                                    }}
+                                    title={t.label}
+                                  >
+                                    <span
+                                      className="ice-theme-chip"
+                                      style={{
+                                        backgroundColor: t.color,
+                                        boxShadow: isSelected ? `0 0 8px ${t.color}` : 'none',
+                                        border: t.color.toLowerCase() === '#ffffff' ? '1px solid rgba(0,0,0,0.18)' : undefined
+                                      }}
+                                    />
+                                    <span className="ice-theme-chip-label">{t.label}</span>
+                                  </button>
+                                );
+                              })}
+
+                              {/* Custom Text Color Picker */}
+                              <label
+                                className={`ice-theme-color-btn custom-color-picker-chip ${isCustomTxt ? 'active' : ''}`}
+                                title="Choose custom text color"
+                              >
+                                <span
+                                  className="ice-theme-chip custom-color-chip-preview"
+                                  style={{
+                                    backgroundColor: curTxtColor,
+                                    boxShadow: isCustomTxt ? `0 0 8px ${curTxtColor}` : 'none'
+                                  }}
+                                >
+                                  <Pipette size={11} color={curTxtColor === '#ffffff' ? '#111827' : '#ffffff'} />
+                                </span>
+                                <span className="ice-theme-chip-label">Custom</span>
+                                <input
+                                  type="color"
+                                  value={curTxtColor.startsWith('#') && curTxtColor.length === 7 ? curTxtColor : '#ffffff'}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    const dark = isColorDark(val);
+                                    updateActiveCard({
+                                      textColor: val,
+                                      textColorMode: dark ? 'dark' : 'light'
+                                    });
+                                  }}
+                                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+                                />
+                              </label>
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                     <div className="ios-sheet-group-divider" />
                     <div className="ios-sheet-group-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
@@ -2250,22 +2287,154 @@ export default function ImageCardEditor({
                     </div>
                   </div>
 
-                  <div className="ios-sheet-section-title">5 Glass Styles</div>
-                  <div className="ios-sheet-designs-grid">
+                  <div className="ios-sheet-section-title">Glass Styles</div>
+                  <div className="ios-sheet-designs-fit-grid">
                     {GLASS_STYLES.map((g) => {
                       const isSelected = activeCard.glassStyle === g.id;
+                      const IconComponent = g.icon;
                       return (
-                        <div
+                        <button
                           key={g.id}
-                          className={`ios-sheet-design-card ${isSelected ? 'active' : ''}`}
-                          onClick={() => updateActiveCard({ glassStyle: g.id })}
+                          type="button"
+                          className={`ios-glass-pill-btn ${isSelected ? 'active' : ''}`}
+                          onClick={() => {
+                            const isSwitching = activeCard.glassStyle !== g.id;
+                            updateActiveCard({
+                              glassStyle: g.id,
+                              ...(isSwitching ? {
+                                glassOpacity: g.defaultOpacity,
+                                glassBlur: g.defaultBlur,
+                                glassTint: g.defaultTint,
+                                textColorMode: g.id === 'blur' ? 'light' : (activeCard.textColorMode || 'dark')
+                              } : {})
+                            });
+                          }}
                         >
-                          <span className="ios-sheet-design-icon">{g.icon}</span>
-                          <span className="ios-sheet-design-name">{g.name}</span>
-                        </div>
+                          <IconComponent size={14} className="ios-glass-pill-icon" />
+                          <span className="ios-glass-pill-label">{g.name}</span>
+                        </button>
                       );
                     })}
                   </div>
+
+                  {/* Glass Fine-Tuning Container (Adjust Opacity, Blur, and Tint Color depending on selection) */}
+                  {(() => {
+                    const curDef = GLASS_STYLES.find(g => g.id === (activeCard.glassStyle || 'blur')) || GLASS_STYLES[3];
+                    const curOpacity = activeCard.glassOpacity !== undefined ? activeCard.glassOpacity : curDef.defaultOpacity;
+                    const curBlur = activeCard.glassBlur !== undefined ? activeCard.glassBlur : curDef.defaultBlur;
+                    const curTint = (activeCard.glassTint || curDef.defaultTint).toLowerCase();
+                    const activePreset = GLASS_TINT_PRESETS.find(t => t.color.toLowerCase() === curTint);
+                    const activeTintName = activePreset ? activePreset.label : 'Custom Tint';
+                    const isCustom = !activePreset;
+
+                    return (
+                      <div className="ios-glass-adjust-box">
+                        {/* Opacity Control */}
+                        <div className="ios-glass-adjust-row">
+                          <div className="ios-adjust-meta">
+                            <span className="ios-adjust-label">Glass Opacity</span>
+                            <span className="ios-adjust-val-badge">{curOpacity}%</span>
+                          </div>
+                          <div className="ios-scale-slider-row">
+                            <span className="ios-scale-slider-label">5%</span>
+                            <input
+                              type="range"
+                              min="5"
+                              max="100"
+                              step="1"
+                              value={curOpacity}
+                              onChange={(e) => updateActiveCard({ glassOpacity: parseInt(e.target.value, 10) })}
+                              className="ios-scale-slider"
+                            />
+                            <span className="ios-scale-slider-label" style={{ textAlign: 'right' }}>100%</span>
+                          </div>
+                        </div>
+
+                        <div className="ios-sheet-group-divider" />
+
+                        {/* Backdrop Blur Control */}
+                        <div className="ios-glass-adjust-row">
+                          <div className="ios-adjust-meta">
+                            <span className="ios-adjust-label">Backdrop Blur</span>
+                            <span className="ios-adjust-val-badge">{curBlur}px</span>
+                          </div>
+                          <div className="ios-scale-slider-row">
+                            <span className="ios-scale-slider-label">0px</span>
+                            <input
+                              type="range"
+                              min="0"
+                              max="30"
+                              step="1"
+                              value={curBlur}
+                              onChange={(e) => updateActiveCard({ glassBlur: parseInt(e.target.value, 10) })}
+                              className="ios-scale-slider"
+                            />
+                            <span className="ios-scale-slider-label" style={{ textAlign: 'right' }}>30px</span>
+                          </div>
+                        </div>
+
+                        <div className="ios-sheet-group-divider" />
+
+                        {/* Glass Tint Color Control */}
+                        <div className="ios-glass-adjust-row">
+                          <div className="ios-adjust-meta">
+                            <span className="ios-adjust-label">Glass Tint Color</span>
+                            <span className="ios-sheet-hint-tag" style={{ textTransform: 'capitalize' }}>
+                              {activeTintName}
+                            </span>
+                          </div>
+                          <div className="ice-theme-color-palette" style={{ marginTop: '4px' }}>
+                            {/* Preset Tint Colors */}
+                            {GLASS_TINT_PRESETS.map((t) => {
+                              const isSelected = curTint === t.color.toLowerCase();
+                              return (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  className={`ice-theme-color-btn ${isSelected ? 'active' : ''}`}
+                                  onClick={() => updateActiveCard({ glassTint: t.color })}
+                                  title={t.label}
+                                >
+                                  <span
+                                    className="ice-theme-chip"
+                                    style={{
+                                      backgroundColor: t.color,
+                                      boxShadow: isSelected ? `0 0 8px ${t.color}` : 'none',
+                                      border: t.color.toLowerCase() === '#ffffff' ? '1px solid rgba(0,0,0,0.18)' : undefined
+                                    }}
+                                  />
+                                  <span className="ice-theme-chip-label">{t.label}</span>
+                                </button>
+                              );
+                            })}
+
+                            {/* Custom Color Picker */}
+                            <label
+                              className={`ice-theme-color-btn custom-color-picker-chip ${isCustom ? 'active' : ''}`}
+                              title="Pick custom tint color"
+                            >
+                              <span
+                                className="ice-theme-chip custom-color-chip-preview"
+                                style={{
+                                  backgroundColor: curTint,
+                                  boxShadow: isCustom ? `0 0 8px ${curTint}` : 'none'
+                                }}
+                              >
+                                <Pipette size={11} color={curTint === '#ffffff' ? '#111827' : '#ffffff'} />
+                              </span>
+                              <span className="ice-theme-chip-label">Custom</span>
+                              <input
+                                type="color"
+                                value={curTint.startsWith('#') && curTint.length === 7 ? curTint : '#ffffff'}
+                                onChange={(e) => updateActiveCard({ glassTint: e.target.value })}
+                                style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="ios-sheet-section-title">Typography Font</div>
                   <div className="ios-sheet-fonts-grid">
@@ -2315,58 +2484,64 @@ export default function ImageCardEditor({
                     </div>
                   )}
 
-                  {/* Built-in Presets */}
-                  <div className="ios-sheet-section-title">Built-in Presets</div>
-                  <div className="ios-sheet-templates-grid">
-                    {DEFAULT_TEMPLATES.map((tpl) => (
-                      <div
-                        key={tpl.id}
-                        className="ios-sheet-template-item"
-                        onClick={() => applyTemplate(tpl)}
-                      >
-                        <div className="ios-sheet-template-name">{tpl.name}</div>
-                        <div className="ios-sheet-template-desc">{tpl.description}</div>
-                      </div>
-                    ))}
-                  </div>
-
                   {/* Custom Presets */}
-                  {customTemplates.length > 0 && (
-                    <>
-                      <div className="ios-sheet-section-title">My Saved Presets</div>
-                      <div className="ios-sheet-templates-grid">
-                        {customTemplates.map((tpl) => (
-                          <div
-                            key={tpl.id}
-                            className="ios-sheet-template-item custom"
-                            onClick={() => applyTemplate(tpl)}
-                          >
-                            <div className="ios-sheet-template-row">
-                              <span className="ios-sheet-template-name">{tpl.name}</span>
-                              <button
-                                type="button"
-                                className="ios-sheet-del-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteTemplate(tpl.id);
-                                }}
-                                title="Delete preset"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                            <div className="ios-sheet-template-desc">{tpl.titleText} • {tpl.priceText}</div>
+                  <div className="ios-sheet-section-title">My Saved Presets</div>
+                  {customTemplates.length > 0 ? (
+                    <div className="ios-sheet-templates-grid">
+                      {customTemplates.map((tpl) => (
+                        <div
+                          key={tpl.id}
+                          className="ios-sheet-template-item custom"
+                          onClick={() => applyTemplate(tpl)}
+                        >
+                          <div className="ios-sheet-template-row">
+                            <span className="ios-sheet-template-name">{tpl.name}</span>
+                            <button
+                              type="button"
+                              className="ios-sheet-del-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTemplate(tpl.id);
+                              }}
+                              title="Delete preset"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </div>
-                        ))}
-                      </div>
-                    </>
+                          <div className="ios-sheet-template-desc">{tpl.titleText} • {tpl.priceText}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                      No saved presets yet. Enter a name above and tap "Save Preset" to save your custom design.
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Bottom Actions inside Sheet */}
-            <div className="ios-sheet-actions" style={{ marginTop: '10px' }}>
+            {/* Bottom Actions inside Sheet: Save Template & Done */}
+            <div className="ios-sheet-actions">
+              <button
+                type="button"
+                className={`ios-sheet-btn-secondary ${isSavedFeedback ? 'saved' : ''}`}
+                onClick={handleQuickSaveDesign}
+                title="Save current adjusted design as a reusable template"
+              >
+                {isSavedFeedback ? (
+                  <>
+                    <Check size={16} />
+                    <span>Saved ✓</span>
+                  </>
+                ) : (
+                  <>
+                    <Bookmark size={15} />
+                    <span>Save Template</span>
+                  </>
+                )}
+              </button>
+
               <button
                 type="button"
                 className="ios-sheet-btn-primary"
@@ -2376,55 +2551,147 @@ export default function ImageCardEditor({
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
 
       {/* ============================================================ */}
-      {/* BOTTOM FOOTER BAR WITH "PREVIEW" & "SAVE & APPLY"            */}
+      {/* BOTTOM ACTION BAR (Single Row: Photo #, Add Card, Preview)   */}
       {/* ============================================================ */}
-      <footer className="insta-bottom-bar">
-        {/* Photo thumbnail indicator */}
-        <div className="insta-thumb-indicator">
+      <div className="ice-actions-single-row">
+        <button
+          type="button"
+          className="insta-thumb-indicator"
+          onClick={() => setIsPhotoPickerOpen(true)}
+          title="Click to choose from uploaded photos"
+        >
           <img src={activeImageUrl || imageUrl} alt="thumb" className="insta-thumb-img" />
           <span className="insta-thumb-label">Photo #{imageIndex + 1}</span>
-        </div>
+        </button>
 
-        {/* Action Buttons: Preview & Save */}
-        <div className="insta-bottom-actions">
-          <button
-            type="button"
-            className="insta-preview-btn"
-            onClick={handleOpenFinalPreview}
-            disabled={isSaving || isGeneratingPreview}
-            title="Preview final image as downloaded"
-          >
-            <Eye size={16} />
-            <span>{isGeneratingPreview ? 'Rendering...' : 'Preview'}</span>
-          </button>
+        <button
+          type="button"
+          className="ice-action-btn-add-inline"
+          onClick={handleAddCard}
+          title="Add product card to this photo"
+        >
+          <SquarePlus size={16} />
+          <span>Add Card</span>
+        </button>
 
-          <button
-            type="button"
-            className="insta-save-next-btn"
-            onClick={handleSaveAndApply}
-            disabled={isSaving || isGeneratingPreview}
-            title="Save changes and apply to image"
+        <button
+          type="button"
+          className="btn btn-glass insta-preview-btn"
+          onClick={handleOpenFinalPreview}
+          disabled={isGeneratingPreview}
+          title="Preview final image as downloaded"
+        >
+          <Eye size={16} />
+          <span>{isGeneratingPreview ? 'Rendering...' : 'Preview'}</span>
+        </button>
+      </div>
+
+      {/* ============================================================ */}
+      {/* UPLOADED PHOTOS SWITCHER POPUP MODAL                         */}
+      {/* ============================================================ */}
+      {isPhotoPickerOpen && createPortal(
+        <>
+          <div
+            className="ios-sheet-backdrop"
+            onClick={() => setIsPhotoPickerOpen(false)}
+          />
+          <div
+            className="ios-photo-picker-sheet animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
           >
-            {isSaving ? (
-              <span>Applying...</span>
-            ) : (
-              <>
-                <span>Save & Apply</span>
-                <Check size={16} />
-              </>
-            )}
-          </button>
-        </div>
-      </footer>
+            {/* Grabber Handle */}
+            <div className="ios-sheet-handle" />
+
+            {/* Header */}
+            <div className="ios-photo-picker-header">
+              <div className="ios-photo-picker-title-box">
+                <span className="ios-photo-picker-title">Uploaded Photos</span>
+                <span className="ios-photo-picker-count">
+                  {(allImages && allImages.length > 0 ? allImages.length : 1)} photos
+                </span>
+              </div>
+              <button
+                type="button"
+                className="ios-photo-picker-close-btn"
+                onClick={() => setIsPhotoPickerOpen(false)}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Grid of uploaded images */}
+            <div className="ios-photo-picker-grid">
+              {(allImages && allImages.length > 0 ? allImages : [{
+                index: imageIndex,
+                url: activeImageUrl || imageUrl,
+                name: `Photo #${imageIndex + 1}`,
+                cardCount: cards.length
+              }]).map((photo) => {
+                const isCurrent = photo.index === imageIndex;
+                return (
+                  <button
+                    key={photo.index}
+                    type="button"
+                    className={`ios-photo-card ${isCurrent ? 'active' : ''}`}
+                    onClick={() => handleSelectPhoto(photo.index)}
+                    title={`Switch to Photo #${photo.index + 1}`}
+                  >
+                    <div className="ios-photo-card-thumb-wrap">
+                      <img src={photo.url} alt={photo.name} className="ios-photo-card-img" />
+                      {isCurrent && (
+                        <div className="ios-photo-active-badge">
+                          <Check size={13} strokeWidth={3} />
+                        </div>
+                      )}
+                      {photo.cardCount > 0 && !isCurrent && (
+                        <div className="ios-photo-card-cards-tag">
+                          {photo.cardCount} {photo.cardCount === 1 ? 'card' : 'cards'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ios-photo-card-info">
+                      <span className="ios-photo-card-index">Photo #{photo.index + 1}</span>
+                      {isCurrent && <span className="ios-photo-card-current-tag">Editing</span>}
+                    </div>
+                  </button>
+                );
+              })}
+
+              {/* Upload More Photos Tile */}
+              {onUploadMoreImages && (
+                <label className="ios-photo-card upload-more-card" title="Upload more photos">
+                  <div className="ios-photo-upload-inner">
+                    <Plus size={22} />
+                    <span>Add Photo</span>
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      onUploadMoreImages(e);
+                      setIsPhotoPickerOpen(false);
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
 
       {/* ============================================================ */}
       {/* HIGH-RES FINAL DOWNLOAD PREVIEW MODAL / LIGHTBOX             */}
       {/* ============================================================ */}
-      {isPreviewModalOpen && previewDataUrl && (
+      {isPreviewModalOpen && previewDataUrl && createPortal(
         <div
           className="ice-final-preview-modal animate-fade-in"
           onClick={() => setIsPreviewModalOpen(false)}
@@ -2458,7 +2725,7 @@ export default function ImageCardEditor({
               />
             </div>
 
-            {/* Footer with Download, Save & Apply, and Keep Editing */}
+            {/* Footer with Download and Keep Editing */}
             <div className="ice-final-preview-footer">
               <button
                 type="button"
@@ -2479,22 +2746,12 @@ export default function ImageCardEditor({
                   <Download size={16} />
                   <span>Download Image</span>
                 </button>
-
-                <button
-                  type="button"
-                  className="ice-final-preview-btn-apply"
-                  onClick={handleSaveFromPreview}
-                  title="Save and apply to photo"
-                >
-                  <span>Save & Apply</span>
-                  <Check size={16} />
-                </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>,
-    document.body
+    </div>
   );
 }

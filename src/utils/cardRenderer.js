@@ -2,6 +2,33 @@
 
 export const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 
+export function isColorDark(hex) {
+  if (!hex || typeof hex !== 'string') return false;
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  if (c.length === 6) {
+    const r = parseInt(c.substr(0, 2), 16);
+    const g = parseInt(c.substr(2, 2), 16);
+    const b = parseInt(c.substr(4, 2), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq < 140;
+  }
+  return false;
+}
+
+export function hexToRgba(hex, alpha = 1) {
+  if (!hex || typeof hex !== 'string') return `rgba(255, 255, 255, ${alpha})`;
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map(x => x + x).join('');
+  }
+  if (c.length === 6) {
+    const num = parseInt(c, 16);
+    return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+  }
+  return hex;
+}
+
 export const getCardThemeColor = (card) => {
   if (card?.themeColor) return card.themeColor;
   return card?.textColorMode === 'dark' ? '#0f172a' : '#ffffff';
@@ -226,7 +253,8 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
     const cardUserScale = card.scale !== undefined ? card.scale : 0.6;
     const cardScale = canvasScale * cardUserScale;
     const themeColor = getCardThemeColor(card);
-    const isDarkText = card.textColorMode === 'dark';
+    const effectiveTextColor = card.textColor || (card.textColorMode === 'dark' ? '#0f172a' : '#ffffff');
+    const isDarkText = isColorDark(effectiveTextColor);
     const padX = 16 * cardScale;
     const padY = 11 * cardScale;
 
@@ -316,21 +344,12 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
       const c2xPx = (curve.c2.x / 100) * natW;
       const c2yPx = (curve.c2.y / 100) * natH;
 
-      // Shadow Line
+      // Luxury sleek callout line with soft ambient blur shadow (seamless direct connection)
       ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(axPx, ayPx);
-      if (isStraight) {
-        ctx.lineTo(txPx, tyPx);
-      } else {
-        ctx.bezierCurveTo(c1xPx, c1yPx, c2xPx, c2yPx, txPx, tyPx);
-      }
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-      ctx.lineWidth = Math.max(2, 2.5 * canvasScale);
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      // Crisp Theme Color Line
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.48)';
+      ctx.shadowBlur = Math.max(2, 3.5 * canvasScale);
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = Math.max(0.6, 1.2 * canvasScale);
       ctx.beginPath();
       ctx.moveTo(axPx, ayPx);
       if (isStraight) {
@@ -339,12 +358,13 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
         ctx.bezierCurveTo(c1xPx, c1yPx, c2xPx, c2yPx, txPx, tyPx);
       }
       ctx.strokeStyle = themeColor;
-      ctx.lineWidth = Math.max(1.2, 1.5 * canvasScale);
+      ctx.lineWidth = Math.max(1.15, 1.4 * canvasScale);
       ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.stroke();
 
-      // Target Pin (Small, clean circle in Theme Color - matches card border)
-      const pinR = Math.max(1.8, 2.4 * canvasScale);
+      // Precision Target Pin (Refined precision dot in Theme Color)
+      const pinR = Math.max(1.8, 2.2 * canvasScale);
       ctx.beginPath();
       ctx.arc(txPx, tyPx, pinR, 0, Math.PI * 2);
       ctx.fillStyle = themeColor;
@@ -368,93 +388,88 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
     traceRoundRect(cx, cy, cw, ch, r);
     ctx.clip();
 
-    if (baseImg && ctx.filter !== undefined) {
-      ctx.filter = card.glassStyle === 'blur' ? `blur(${Math.round(14 * canvasScale)}px)` : `blur(${Math.round(8 * canvasScale)}px)`;
+    const gStyle = card.glassStyle || 'blur';
+    const glassDefaults = {
+      frosted: { opacity: 25, blur: 10, tint: '#ffffff' },
+      liquid: { opacity: 35, blur: 14, tint: '#ffffff' },
+      translucent: { opacity: 15, blur: 8, tint: '#ffffff' },
+      blur: { opacity: 68, blur: 16, tint: '#1e2430' }
+    }[gStyle] || { opacity: 40, blur: 12, tint: '#ffffff' };
+
+    const blurPx = card.glassBlur !== undefined ? card.glassBlur : glassDefaults.blur;
+    const opacityVal = card.glassOpacity !== undefined ? card.glassOpacity : glassDefaults.opacity;
+    const tintColor = card.glassTint || glassDefaults.tint;
+    const alpha = Math.max(0.02, Math.min(1, opacityVal / 100));
+
+    if (baseImg && ctx.filter !== undefined && blurPx > 0) {
+      ctx.filter = `blur(${Math.round(blurPx * canvasScale)}px)`;
       ctx.drawImage(baseImg, 0, 0, natW, natH);
       ctx.filter = 'none';
     }
 
-    if (card.glassStyle === 'frosted') {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
-    } else if (card.glassStyle === 'liquid') {
+    if (gStyle === 'liquid') {
       const grad = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 0.32)');
-      grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.14)');
-      grad.addColorStop(1, 'rgba(255, 255, 255, 0.26)');
+      grad.addColorStop(0, hexToRgba(tintColor, Math.min(1, alpha * 1.25)));
+      grad.addColorStop(0.5, hexToRgba(tintColor, alpha * 0.5));
+      grad.addColorStop(1, hexToRgba(tintColor, Math.min(1, alpha * 0.95)));
       ctx.fillStyle = grad;
-    } else if (card.glassStyle === 'translucent') {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-    } else if (card.glassStyle === 'blur') {
+    } else if (gStyle === 'blur') {
       const grad = ctx.createLinearGradient(cx, cy, cx, cy + ch);
-      grad.addColorStop(0, 'rgba(32, 36, 44, 0.65)');
-      grad.addColorStop(1, 'rgba(16, 20, 26, 0.75)');
+      grad.addColorStop(0, hexToRgba(tintColor, alpha * 0.9));
+      grad.addColorStop(1, hexToRgba(tintColor, Math.min(1, alpha * 1.1)));
       ctx.fillStyle = grad;
-    } else if (card.glassStyle === 'privacy') {
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    } else if (gStyle === 'translucent') {
+      const grad = ctx.createLinearGradient(cx, cy, cx + cw, cy + ch);
+      grad.addColorStop(0, hexToRgba(tintColor, Math.min(1, alpha * 1.15)));
+      grad.addColorStop(1, hexToRgba(tintColor, alpha * 0.45));
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = hexToRgba(tintColor, alpha);
     }
     ctx.fillRect(cx, cy, cw, ch);
     ctx.restore();
 
-    // 5. Border stroke (Theme Color)
-    ctx.save();
-    traceRoundRect(cx, cy, cw, ch, r);
-    ctx.strokeStyle = themeColor;
-    ctx.lineWidth = Math.max(1.2, 1.4 * canvasScale);
-    ctx.stroke();
-    ctx.restore();
-
-    // 5.2 Draw Anchor on Card Border (Capsule Badge or Small Circle in Theme Color)
-    if (card.hasTargetLine) {
+    // 5. Authentic Glass Border Stroke (Translucent Specular Refraction)
+    if (card.hasBorder !== false) {
       ctx.save();
-      const cardAnchor = getAnchorPoint(fittedCard, card.targetPos, card.targetAnchor);
-      const axPx = (cardAnchor.x / 100) * natW;
-      const ayPx = (cardAnchor.y / 100) * natH;
+      traceRoundRect(cx, cy, cw, ch, r);
 
-      if (card.anchorStyle === 'circle') {
-        const dotR = Math.max(1.8, 2.4 * canvasScale);
-        ctx.beginPath();
-        ctx.arc(axPx, ayPx, dotR, 0, Math.PI * 2);
-        ctx.fillStyle = themeColor;
-        ctx.fill();
+      const borderGrad = ctx.createLinearGradient(cx, cy, cx, cy + ch);
+      const rawTheme = card.themeColor || '#ffffff';
+      const isWhiteTheme = !card.themeColor || card.themeColor.toLowerCase() === '#ffffff' || card.themeColor === 'white';
+      const isDarkTheme = card.themeColor === '#0f172a' || card.textColorMode === 'dark';
+
+      if (isWhiteTheme) {
+        borderGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');    // Specular top light catch
+        borderGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.38)');  // Translucent glass body
+        borderGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.20)');   // Subtle lower refraction
+        borderGrad.addColorStop(1, 'rgba(255, 255, 255, 0.58)');    // Ground specular reflection
+      } else if (isDarkTheme) {
+        borderGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+        borderGrad.addColorStop(0.5, 'rgba(15, 23, 42, 0.50)');
+        borderGrad.addColorStop(1, 'rgba(15, 23, 42, 0.75)');
       } else {
-        const isHoriz = cardAnchor.side === 'top' || cardAnchor.side === 'bottom';
-        const capW = (isHoriz ? 24 : 12) * cardScale;
-        const capH = (isHoriz ? 12 : 24) * cardScale;
-        const capR = Math.min(capW, capH) / 2;
-
-        traceRoundRect(axPx - capW / 2, ayPx - capH / 2, capW, capH, capR);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-        ctx.shadowBlur = Math.max(2, 3 * canvasScale);
-        ctx.fill();
-        ctx.strokeStyle = themeColor;
-        ctx.lineWidth = Math.max(1.2, 1.4 * canvasScale);
-        ctx.stroke();
-
-        ctx.fillStyle = themeColor;
-        ctx.beginPath();
-        const arrW = 5 * cardScale;
-        const arrH = 6 * cardScale;
-        if (cardAnchor.side === 'left' || cardAnchor.arrow === '▶') {
-          ctx.moveTo(axPx - arrW / 2, ayPx - arrH / 2);
-          ctx.lineTo(axPx + arrW / 2, ayPx);
-          ctx.lineTo(axPx - arrW / 2, ayPx + arrH / 2);
-        } else if (cardAnchor.side === 'right' || cardAnchor.arrow === '◀') {
-          ctx.moveTo(axPx + arrW / 2, ayPx - arrH / 2);
-          ctx.lineTo(axPx - arrW / 2, ayPx);
-          ctx.lineTo(axPx + arrW / 2, ayPx + arrH / 2);
-        } else if (cardAnchor.side === 'top' || cardAnchor.arrow === '▼') {
-          ctx.moveTo(axPx - arrH / 2, ayPx - arrW / 2);
-          ctx.lineTo(axPx, ayPx + arrW / 2);
-          ctx.lineTo(axPx + arrH / 2, ayPx - arrW / 2);
-        } else {
-          ctx.moveTo(axPx - arrH / 2, ayPx + arrW / 2);
-          ctx.lineTo(axPx, ayPx - arrW / 2);
-          ctx.lineTo(axPx + arrH / 2, ayPx + arrW / 2);
-        }
-        ctx.closePath();
-        ctx.fill();
+        borderGrad.addColorStop(0, hexToRgba(rawTheme, 0.90));
+        borderGrad.addColorStop(0.35, hexToRgba(rawTheme, 0.45));
+        borderGrad.addColorStop(0.7, hexToRgba(rawTheme, 0.25));
+        borderGrad.addColorStop(1, hexToRgba(rawTheme, 0.70));
       }
+
+      ctx.strokeStyle = borderGrad;
+      ctx.lineWidth = Math.max(1.2, 1.4 * canvasScale);
+      ctx.stroke();
+
+      // Top Specular Bevel Line (Liquid Glass highlight sheen along upper curve)
+      if (isWhiteTheme || !isDarkTheme) {
+        ctx.beginPath();
+        const bevelMargin = Math.max(r * 0.7, 6 * canvasScale);
+        ctx.moveTo(cx + bevelMargin, cy + (1.2 * canvasScale));
+        ctx.lineTo(cx + cw - bevelMargin, cy + (1.2 * canvasScale));
+        ctx.strokeStyle = isWhiteTheme ? 'rgba(255, 255, 255, 0.45)' : hexToRgba(rawTheme, 0.45);
+        ctx.lineWidth = Math.max(0.75, 1 * canvasScale);
+        ctx.stroke();
+      }
+
       ctx.restore();
     }
 
@@ -482,7 +497,7 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
     // Title
     if (card.titleText) {
       ctx.font = `400 ${titleFontSz}px "${card.fontFamily || 'Montserrat'}", -apple-system, sans-serif`;
-      ctx.fillStyle = isDarkText ? 'rgba(15, 23, 42, 0.72)' : 'rgba(255, 255, 255, 0.78)';
+      ctx.fillStyle = hexToRgba(effectiveTextColor, isDarkText ? 0.76 : 0.82);
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       ctx.fillText(card.titleText, textX, curY);
@@ -497,14 +512,14 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
 
       if (pPrefix && pCurr) {
         ctx.font = `500 ${currFontSz}px "${card.fontFamily || 'Montserrat'}", -apple-system, sans-serif`;
-        ctx.fillStyle = isDarkText ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.88)';
+        ctx.fillStyle = hexToRgba(effectiveTextColor, isDarkText ? 0.85 : 0.9);
         ctx.fillText(pCurr, currX, curY + (priceFontSz - currFontSz) * 0.75);
         currX += ctx.measureText(pCurr).width + (3 * cardScale);
       }
 
       if (pAmt) {
         ctx.font = `800 ${priceFontSz}px "${card.fontFamily || 'Montserrat'}", -apple-system, sans-serif`;
-        ctx.fillStyle = isDarkText ? '#0f172a' : '#ffffff';
+        ctx.fillStyle = effectiveTextColor;
         ctx.fillText(pAmt, currX, curY);
         currX += ctx.measureText(pAmt).width;
       }
@@ -512,7 +527,7 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
       if (!pPrefix && pCurr) {
         currX += (4 * cardScale);
         ctx.font = `500 ${currFontSz}px "${card.fontFamily || 'Montserrat'}", -apple-system, sans-serif`;
-        ctx.fillStyle = isDarkText ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.88)';
+        ctx.fillStyle = hexToRgba(effectiveTextColor, isDarkText ? 0.85 : 0.9);
         ctx.fillText(pCurr, currX, curY + (priceFontSz - currFontSz) * 0.75);
       }
 
@@ -525,7 +540,7 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
       ctx.beginPath();
       ctx.moveTo(textX, curY);
       ctx.lineTo(cx + cw - padX, curY);
-      ctx.strokeStyle = isDarkText ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.35)';
+      ctx.strokeStyle = hexToRgba(effectiveTextColor, isDarkText ? 0.25 : 0.35);
       ctx.lineWidth = Math.max(1, 1.2 * cardScale);
       ctx.stroke();
       curY += 8 * cardScale;
@@ -544,14 +559,14 @@ export function drawCardsOnCanvas(ctx, baseImg, natW, natH, cards, screenW = 400
 
         ctx.save();
         traceRoundRect(pillX, curY, pillW, pillH, pillRadius);
-        ctx.strokeStyle = isDarkText ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.6)';
+        ctx.strokeStyle = hexToRgba(effectiveTextColor, isDarkText ? 0.45 : 0.6);
         ctx.lineWidth = Math.max(1, 1.2 * cardScale);
         ctx.stroke();
 
         ctx.fillStyle = isDarkText ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.12)';
         ctx.fill();
 
-        ctx.fillStyle = isDarkText ? '#0f172a' : '#ffffff';
+        ctx.fillStyle = effectiveTextColor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(sz, pillX + (pillW / 2), curY + (pillH / 2));
