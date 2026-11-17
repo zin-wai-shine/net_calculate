@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Select from 'react-select';
-import { ArrowLeft, Upload, Download, Type, Image as ImageIcon, Move, Sparkles, Trash2, Grid, RotateCw, Pencil } from 'lucide-react';
+import { ArrowLeft, Upload, Download, Type, Image as ImageIcon, Move, Sparkles, Trash2, Grid, RotateCw, Pencil, Tag, Shuffle } from 'lucide-react';
 import ImageCardEditor from './ImageCardEditor';
 import { drawCardsOnCanvas } from '../utils/cardRenderer';
 
@@ -296,6 +296,8 @@ const WatermarkStudio = ({ onBack }) => {
   const [originalCleanUrls, setOriginalCleanUrls] = useState([]);
   const [cardsPerImage, setCardsPerImage] = useState({});
   const [cardBaseUrls, setCardBaseUrls] = useState({});
+  const [customFileNames, setCustomFileNames] = useState({});
+  const [batchNamePrefix, setBatchNamePrefix] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
@@ -517,17 +519,41 @@ const WatermarkStudio = ({ onBack }) => {
     };
   }, []);
 
+  // Generate a clean random filename, preserving the original extension
+  const generateRandomFileName = (fileOrName) => {
+    let ext = '.jpg';
+    const name = typeof fileOrName === 'string' ? fileOrName : fileOrName?.name;
+    if (name && name.includes('.')) {
+      ext = name.substring(name.lastIndexOf('.'));
+    }
+    // Clean random alphanumeric string (7 chars) e.g. img_7b2k9a.jpg
+    const randCode = Math.random().toString(36).substring(2, 9);
+    return `img_${randCode}${ext}`;
+  };
+
   // Multi-image upload handler
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
     const urls = files.map(file => URL.createObjectURL(file));
+    const startIdx = uploadedFiles.length;
     setUploadedFiles(prev => [...prev, ...files]);
     setRawPreviewUrls(prev => [...prev, ...urls]);
     setOriginalCleanFiles(prev => [...prev, ...files]);
     setOriginalCleanUrls(prev => [...prev, ...urls]);
     setWatermarkedUrls(prev => [...prev, ...files.map(() => null)]);
+
+    // Auto-assign random clean file name by default
+    setCustomFileNames(prev => {
+      const next = { ...prev };
+      files.forEach((f, i) => {
+        if (!next[startIdx + i]) {
+          next[startIdx + i] = generateRandomFileName(f);
+        }
+      });
+      return next;
+    });
   };
 
   const clearAllFiles = () => {
@@ -544,6 +570,8 @@ const WatermarkStudio = ({ onBack }) => {
     setWatermarkedUrls([]);
     setCardsPerImage({});
     setCardBaseUrls({});
+    setCustomFileNames({});
+    setBatchNamePrefix('');
     setActivePreviewIndex(0);
   };
 
@@ -570,10 +598,75 @@ const WatermarkStudio = ({ onBack }) => {
       delete next[index];
       return next;
     });
+    setCustomFileNames(prev => {
+      const next = {};
+      let nextIdx = 0;
+      uploadedFiles.forEach((_, i) => {
+        if (i !== index) {
+          if (prev[i]) next[nextIdx] = prev[i];
+          nextIdx++;
+        }
+      });
+      return next;
+    });
 
     if (activePreviewIndex >= uploadedFiles.length - 1) {
       setActivePreviewIndex(Math.max(0, uploadedFiles.length - 2));
     }
+  };
+
+  // Helper to get active file name for image at index
+  const getImageFileName = (idx) => {
+    const custom = customFileNames[idx];
+    if (custom && custom.trim()) return custom.trim();
+    const file = uploadedFiles[idx];
+    return file ? generateRandomFileName(file) : `img_${idx + 1}.jpg`;
+  };
+
+  const handleUpdateFileName = (idx, newName) => {
+    setCustomFileNames(prev => ({
+      ...prev,
+      [idx]: newName
+    }));
+  };
+
+  const handleRandomizeSingleName = (idx) => {
+    const file = uploadedFiles[idx];
+    const newRandom = generateRandomFileName(file || customFileNames[idx]);
+    setCustomFileNames(prev => ({
+      ...prev,
+      [idx]: newRandom
+    }));
+  };
+
+  const handleRandomizeAllNames = () => {
+    if (uploadedFiles.length === 0) return;
+    setCustomFileNames(prev => {
+      const next = { ...prev };
+      uploadedFiles.forEach((file, idx) => {
+        next[idx] = generateRandomFileName(file || prev[idx]);
+      });
+      return next;
+    });
+  };
+
+  const handleBatchRename = () => {
+    const prefix = batchNamePrefix.trim();
+    if (!prefix || uploadedFiles.length === 0) return;
+
+    setCustomFileNames(prev => {
+      const next = { ...prev };
+      uploadedFiles.forEach((file, idx) => {
+        const dotIdx = (file.name || '').lastIndexOf('.');
+        const ext = dotIdx !== -1 ? file.name.substring(dotIdx) : '.jpg';
+        if (uploadedFiles.length === 1) {
+          next[idx] = `${prefix}${ext}`;
+        } else {
+          next[idx] = `${prefix}-${idx + 1}${ext}`;
+        }
+      });
+      return next;
+    });
   };
 
   const handleSaveEditedImage = ({ index, file, previewUrl, cards, baseImageUrl }) => {
@@ -796,22 +889,30 @@ const WatermarkStudio = ({ onBack }) => {
   // Convert data URL to a File object for sharing
   const dataUrlToFile = async (url, fileName) => {
     const blob = await fetch(url).then(r => r.blob());
-    const dotIdx = fileName.lastIndexOf('.');
-    const name = dotIdx !== -1 ? fileName.substring(0, dotIdx) : fileName;
-    const ext = dotIdx !== -1 ? fileName.substring(dotIdx) : '.png';
-    return new File([blob], `${name}-watermarked${ext}`, { type: blob.type });
+    let finalName = (fileName || 'image.jpg').trim();
+    if (!finalName.includes('.')) {
+      const ext = (blob.type && blob.type.includes('png')) ? '.png' : '.jpg';
+      finalName += ext;
+    }
+    return new File([blob], finalName, { type: blob.type || 'image/jpeg' });
   };
 
   // Download / Save logic
   const downloadSingleImage = async (url, fileName) => {
+    if (!url) return;
+    let finalName = (fileName || 'image.jpg').trim();
+    if (!finalName.includes('.')) {
+      finalName += '.jpg';
+    }
+
     // On iOS with Web Share API: trigger native share sheet directly on this page
     if (isIOS && canShareFiles()) {
       try {
-        const file = await dataUrlToFile(url, fileName);
+        const file = await dataUrlToFile(url, finalName);
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'Watermarked Image',
+            title: finalName,
           });
           return;
         }
@@ -822,18 +923,13 @@ const WatermarkStudio = ({ onBack }) => {
     }
 
     // Non-iOS or fallback: standard anchor download
-    const dotIdx = fileName.lastIndexOf('.');
-    const name = dotIdx !== -1 ? fileName.substring(0, dotIdx) : fileName;
-    const ext = dotIdx !== -1 ? fileName.substring(dotIdx) : '.png';
-    const downloadName = `${name}-watermarked${ext}`;
-
     fetch(url)
       .then(r => r.blob())
       .then(blob => {
         const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = downloadName;
+        link.download = finalName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -842,7 +938,7 @@ const WatermarkStudio = ({ onBack }) => {
       .catch(() => {
         const link = document.createElement('a');
         link.href = url;
-        link.download = downloadName;
+        link.download = finalName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -850,9 +946,17 @@ const WatermarkStudio = ({ onBack }) => {
   };
 
   const downloadAll = async () => {
+    if (uploadedFiles.length === 0) return;
+
     const readyPairs = uploadedFiles
-      .map((file, idx) => ({ url: watermarkedUrls[idx], name: file.name }))
+      .map((file, idx) => {
+        const targetUrl = watermarkedUrls[idx] || cardBaseUrls[idx] || rawPreviewUrls[idx] || originalCleanUrls[idx];
+        const customName = getImageFileName(idx);
+        return { url: targetUrl, name: customName };
+      })
       .filter(p => p.url);
+
+    if (readyPairs.length === 0) return;
 
     // On iOS with Web Share API: share ALL files at once in one native sheet
     if (isIOS && canShareFiles() && readyPairs.length > 0) {
@@ -863,7 +967,7 @@ const WatermarkStudio = ({ onBack }) => {
         if (navigator.canShare({ files })) {
           await navigator.share({
             files,
-            title: 'Watermarked Images',
+            title: 'Photos',
           });
           return;
         }
@@ -896,6 +1000,7 @@ const WatermarkStudio = ({ onBack }) => {
           originalCleanFiles[editingImageIndex]
         }
         imageIndex={editingImageIndex}
+        fileName={getImageFileName(editingImageIndex)}
         allImages={uploadedFiles.map((file, idx) => ({
           index: idx,
           url:
@@ -904,7 +1009,7 @@ const WatermarkStudio = ({ onBack }) => {
             rawPreviewUrls[idx] ||
             originalCleanUrls[idx] ||
             (file ? URL.createObjectURL(file) : null),
-          name: file?.name || `Photo #${idx + 1}`,
+          name: getImageFileName(idx),
           cardCount: (cardsPerImage[idx] || []).length
         }))}
         onSelectImageIndex={(newIdx) => setEditingImageIndex(newIdx)}
@@ -1523,33 +1628,49 @@ const WatermarkStudio = ({ onBack }) => {
 
       {/* Page Body */}
       <div className="watermark-studio-body">
-        {/* Large Scrollable Previews (above and outside the card container) */}
+        {/* Previews Header Bar with Batch Rename and Clear All */}
         {uploadedFiles.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+          <div className="wm-previews-header-bar">
+            <div className="wm-batch-rename-wrap">
+              <div className="wm-batch-rename-input-wrap">
+                <Tag size={14} className="wm-batch-rename-icon" />
+                <input
+                  type="text"
+                  className="wm-batch-rename-input"
+                  placeholder="Batch rename prefix (e.g. Photo, Item)..."
+                  value={batchNamePrefix}
+                  onChange={(e) => setBatchNamePrefix(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleBatchRename();
+                    }
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className="wm-batch-rename-btn"
+                onClick={handleBatchRename}
+                disabled={!batchNamePrefix.trim()}
+                title="Apply rename prefix to all uploaded images"
+              >
+                Apply Prefix
+              </button>
+              <button
+                type="button"
+                className="wm-batch-random-btn"
+                onClick={handleRandomizeAllNames}
+                title="Randomly change all file names"
+              >
+                <Shuffle size={13} />
+                Randomize All
+              </button>
+            </div>
+
             <button
               onClick={clearAllFiles}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '0.4rem 0.85rem',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                borderRadius: '8px',
-                color: '#f87171',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
-                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.6)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
-              }}
+              className="wm-clear-all-btn"
               title="Clear all uploaded photos"
             >
               <Trash2 size={13} />
@@ -1557,67 +1678,114 @@ const WatermarkStudio = ({ onBack }) => {
             </button>
           </div>
         )}
+
+        {/* Large Scrollable Previews Container */}
         {uploadedFiles.length > 0 && (
           <div className="wm-large-previews-container">
-            {uploadedFiles.map((file, idx) => (
-              <div
-                key={idx}
-                className={`wm-large-preview-card ${activePreviewIndex === idx ? 'active' : ''} ${watermarkedUrls[idx] ? 'ready' : ''}`}
-                onClick={() => {
-                  setActivePreviewIndex(idx);
-                  setLightboxIndex(idx);
-                }}
-              >
-                <img
-                  src={watermarkedUrls[idx] || rawPreviewUrls[idx]}
-                  alt={`Preview ${idx}`}
-                  className="wm-large-preview-img"
-                />
-                
-                {/* Individual Download Button (only if watermarked/ready) */}
-                {watermarkedUrls[idx] && (
-                  <button
-                    className="wm-large-preview-download"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      downloadSingleImage(watermarkedUrls[idx], file.name);
+            {uploadedFiles.map((file, idx) => {
+              const currentImgUrl = watermarkedUrls[idx] || cardBaseUrls[idx] || rawPreviewUrls[idx];
+              const currentFileName = getImageFileName(idx);
+              const isWatermarked = !!watermarkedUrls[idx];
+
+              return (
+                <div key={idx} className="wm-preview-item-box">
+                  <div
+                    className={`wm-large-preview-card ${activePreviewIndex === idx ? 'active' : ''} ${isWatermarked ? 'ready' : ''}`}
+                    onClick={() => {
+                      setActivePreviewIndex(idx);
+                      setLightboxIndex(idx);
                     }}
-                    title="Download Watermarked Image"
                   >
-                    <Download size={15} />
-                  </button>
-                )}
+                    <img
+                      src={currentImgUrl}
+                      alt={currentFileName}
+                      className="wm-large-preview-img"
+                    />
 
-                {/* Edit & Add Glass Card Button */}
-                <button
-                  className="wm-large-preview-edit"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingImageIndex(idx);
-                  }}
-                  title="Edit Image & Add Glass Card"
-                >
-                  <Pencil size={14} />
-                </button>
+                    {/* Individual Download Button (Always available for each image) */}
+                    <button
+                      className="wm-large-preview-download"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadSingleImage(currentImgUrl, currentFileName);
+                      }}
+                      title={`Download ${currentFileName}`}
+                    >
+                      <Download size={15} />
+                    </button>
 
-                {/* Remove Button */}
-                <button
-                  className="wm-large-preview-remove"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeUploadedFile(idx);
-                  }}
-                  title="Remove Image"
-                >
-                  <Trash2 size={15} />
-                </button>
+                    {/* Edit & Add Glass Card Button */}
+                    <button
+                      className="wm-large-preview-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingImageIndex(idx);
+                      }}
+                      title="Edit Image & Add Glass Card"
+                    >
+                      <Pencil size={14} />
+                    </button>
 
-                {/* Hover Pill for easy editing */}
-                <div className="wm-card-edit-pill">
-                  <Pencil size={11} /> Edit Card
+                    {/* Remove Button */}
+                    <button
+                      className="wm-large-preview-remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeUploadedFile(idx);
+                      }}
+                      title="Remove Image"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+
+                    {/* Hover Pill for easy editing */}
+                    <div className="wm-card-edit-pill">
+                      <Pencil size={11} /> Edit Card
+                    </div>
+                  </div>
+
+                  {/* Inline File Name Bar with quick save/download & random change */}
+                  <div className="wm-preview-filename-bar">
+                    <div className="wm-filename-input-wrap">
+                      <Tag size={13} className="wm-filename-tag-icon" />
+                      <input
+                        type="text"
+                        className="wm-filename-input"
+                        value={customFileNames[idx] ?? currentFileName}
+                        onChange={(e) => handleUpdateFileName(idx, e.target.value)}
+                        placeholder={`img_${idx + 1}.jpg`}
+                        title="Click to edit or rename this image"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    {/* Randomly change file name button */}
+                    <button
+                      type="button"
+                      className="wm-filename-random-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRandomizeSingleName(idx);
+                      }}
+                      title="Randomly change this file name"
+                    >
+                      <Shuffle size={13} />
+                    </button>
+                    {/* Quick download button */}
+                    <button
+                      type="button"
+                      className="wm-filename-dl-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadSingleImage(currentImgUrl, currentFileName);
+                      }}
+                      title={`Download as ${currentFileName}`}
+                    >
+                      <Download size={13} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -1656,9 +1824,9 @@ const WatermarkStudio = ({ onBack }) => {
             </button>
             
             <button
-              className={`btn-wm-secondary${uploadedFiles.length > 0 && watermarkedUrls.length === uploadedFiles.length && watermarkedUrls.every(u => u !== null) ? ' btn-wm-success' : ''}`}
+              className={`btn-wm-secondary btn-wm-success`}
               onClick={downloadAll}
-              disabled={isProcessing || uploadedFiles.length === 0 || !watermarkedUrls.every(u => u !== null)}
+              disabled={isProcessing || uploadedFiles.length === 0}
               style={{
                 flex: 1,
                 minWidth: '150px',
@@ -1670,7 +1838,7 @@ const WatermarkStudio = ({ onBack }) => {
               }}
             >
               <Download size={16} />
-              {isIOS ? 'Save to Photos' : 'Download All'}
+              {isIOS ? 'Save All to Photos' : 'Download All'}
             </button>
           </div>
         )}

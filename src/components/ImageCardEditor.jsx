@@ -334,6 +334,7 @@ export default function ImageCardEditor({
   imageUrl,
   imageFile,
   imageIndex,
+  fileName,
   allImages = [],
   onSelectImageIndex,
   onUploadMoreImages,
@@ -1148,8 +1149,10 @@ export default function ImageCardEditor({
     if (!previewDataUrl) return;
     const a = document.createElement('a');
     a.href = previewDataUrl;
-    const originalName = (imageFile && imageFile.name) || `photo-${imageIndex + 1}.jpg`;
-    const downloadName = originalName.replace(/\.[^/.]+$/, '') + '-with-cards.png';
+    let baseName = (fileName || (imageFile && imageFile.name) || `photo-${imageIndex + 1}.png`).trim();
+    let downloadName = baseName.includes('.')
+      ? baseName.replace(/\.[^/.]+$/, '') + '.png'
+      : `${baseName}.png`;
     a.download = downloadName;
     document.body.appendChild(a);
     a.click();

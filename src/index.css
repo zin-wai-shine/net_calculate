@@ -1532,8 +1532,221 @@ body {
   border-radius: 4px;
 }
 
+/* Previews Header Bar with Batch Rename */
+.wm-previews-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.wm-batch-rename-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 440px;
+}
+
+.wm-batch-rename-input-wrap {
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.wm-batch-rename-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+}
+
+.wm-batch-rename-input {
+  width: 100%;
+  padding: 0.42rem 0.75rem 0.42rem 2rem;
+  background: var(--input-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wm-batch-rename-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-glow, rgba(59, 130, 246, 0.2));
+}
+
+.wm-batch-rename-btn {
+  padding: 0.42rem 0.85rem;
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.wm-batch-rename-btn:hover:not(:disabled) {
+  background: var(--accent-color);
+  color: var(--btn-primary-text);
+  border-color: var(--accent-color);
+}
+
+.wm-batch-rename-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wm-batch-random-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.42rem 0.85rem;
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--btn-glass-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.wm-batch-random-btn:hover {
+  background: var(--accent-color);
+  color: var(--btn-primary-text);
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.wm-clear-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.42rem 0.85rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.wm-clear-all-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* Item box with preview card and filename bar */
+.wm-preview-item-box {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wm-preview-filename-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.wm-filename-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.wm-filename-tag-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.wm-filename-input {
+  width: 100%;
+  padding: 0.38rem 0.6rem 0.38rem 1.7rem;
+  background: var(--input-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--card-border);
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  text-overflow: ellipsis;
+}
+
+.wm-filename-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-glow, rgba(59, 130, 246, 0.2));
+  background: var(--modal-bg);
+}
+
+.wm-filename-random-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  background: var(--btn-glass-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-muted, #94a3b8);
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.wm-filename-random-btn:hover {
+  background: var(--accent-color);
+  color: var(--btn-primary-text);
+  border-color: var(--accent-color);
+  transform: scale(1.08);
+}
+
+.wm-filename-dl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.wm-filename-dl-btn:hover {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  transform: scale(1.05);
+}
+
 .wm-large-preview-card {
   position: relative;
+  width: 100%;
   flex: 0 0 280px;
   height: 180px;
   background: var(--formula-badge-bg);
@@ -1545,6 +1758,10 @@ body {
   overflow: hidden;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
+}
+
+.wm-preview-item-box .wm-large-preview-card {
+  flex: none;
 }
 
 .wm-large-preview-card:hover {
@@ -3308,7 +3525,7 @@ body {
 .wm-large-preview-edit {
   position: absolute;
   top: 10px;
-  right: 48px;
+  right: 86px;
   background: var(--btn-glass-bg);
   border: 1px solid var(--btn-glass-border);
   color: var(--text-primary);
